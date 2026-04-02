@@ -1,20 +1,21 @@
 import React from 'react';
 import type { ChangeEvent } from 'react';
-import type { UserProfile } from '../../../types';
+import type { UserProfile, BookMetadata } from '../../../types';
 
 interface ProfileManagerProps {
   sentences: string[];
   activeIndex: number;
+  metadata?: BookMetadata;
   onLoadProfile: (profile: UserProfile) => void;
 }
 
-export const ProfileManager: React.FC<ProfileManagerProps> = ({ sentences, activeIndex, onLoadProfile }) => {
+export const ProfileManager: React.FC<ProfileManagerProps> = ({ sentences, activeIndex, metadata, onLoadProfile }) => {
   const handleExport = () => {
     if (sentences.length === 0) {
       alert("No data loaded to export!");
       return;
     }
-    const profile: UserProfile = { sentences, activeIndex };
+    const profile: UserProfile = { sentences, activeIndex, metadata };
     const jsonString = JSON.stringify(profile);
     const blob = new Blob([jsonString], { type: "application/json" });
     const url = URL.createObjectURL(blob);

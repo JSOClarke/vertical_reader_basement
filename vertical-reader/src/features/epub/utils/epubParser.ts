@@ -1,6 +1,12 @@
 import JSZip from 'jszip';
+import type { BookMetadata } from '../../../types';
 
-export async function parseEpub(file: File): Promise<string[]> {
+export interface EpubData {
+  sentences: string[];
+  metadata: BookMetadata;
+}
+
+export async function parseEpub(file: File): Promise<EpubData> {
   const zip = new JSZip();
   await zip.loadAsync(file);
 
@@ -31,6 +37,45 @@ export async function parseEpub(file: File): Promise<string[]> {
     const href = item.getAttribute('href');
     if (id && href) manifestMap[id] = href;
   });
+
+  // Extract Metadata
+  const titleNodes = opfDoc.getElementsByTagName('dc:title');
+  const title = titleNodes.length > 0 ? titleNodes[0].textContent || undefined : undefined;
+
+  const authorNodes = opfDoc.getElementsByTagName('dc:creator');
+  const author = authorNodes.length > 0 ? authorNodes[0].textContent || undefined : undefined;
+
+  let coverImage: string | undefined;
+  const coverMeta = opfDoc.querySelector('meta[name="cover"]');
+  if (coverMeta) {
+    const coverId = coverMeta.getAttribute('content');
+    if (coverId && manifestMap[coverId]) {
+      const coverHref = manifestMap[coverId];
+      const coverPath = opfDir + decodeURIComponent(coverHref);
+      const coverFile = zip.file(coverPath);
+      if (coverFile) {
+        const base64 = await coverFile.async('base64');
+        const mime = coverHref.toLowerCase().endsWith('png') ? 'image/png' : 'image/jpeg';
+        coverImage = `data:${mime};base64,${base64}`;
+      }
+    }
+  }
+
+  if (!coverImage) {
+    const coverItem = opfDoc.querySelector('item[properties="cover-image"]');
+    if (coverItem) {
+      const coverHref = coverItem.getAttribute('href');
+      if (coverHref) {
+        const coverPath = opfDir + decodeURIComponent(coverHref);
+        const coverFile = zip.file(coverPath);
+        if (coverFile) {
+          const base64 = await coverFile.async('base64');
+          const mime = coverHref.toLowerCase().endsWith('png') ? 'image/png' : 'image/jpeg';
+          coverImage = `data:${mime};base64,${base64}`;
+        }
+      }
+    }
+  }
 
   // 3. Extract HTML payload in reading order
   const spineItems = opfDoc.querySelectorAll('spine > itemref');
@@ -85,5 +130,8 @@ export async function parseEpub(file: File): Promise<string[]> {
     }
   }
 
-  return sentences;
+  return { 
+    sentences, 
+    metadata: { title, author, coverImage } 
+  };
 }

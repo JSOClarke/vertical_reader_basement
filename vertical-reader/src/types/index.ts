@@ -10,7 +10,14 @@ export interface ReaderProps {
   onIndexChange: (index: number | ((prev: number) => number)) => void;
 }
 
+export interface BookMetadata {
+  title?: string;
+  author?: string;
+  coverImage?: string;
+}
+
 export interface UserProfile {
   sentences: string[];
   activeIndex: number;
+  metadata?: BookMetadata;
 }

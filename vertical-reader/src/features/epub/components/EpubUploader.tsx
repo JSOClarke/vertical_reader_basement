@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { parseEpub } from '../utils/epubParser';
+import type { EpubData } from '../utils/epubParser';
 
 interface EpubUploaderProps {
-  onSentencesLoaded: (sentences: string[]) => void;
+  onEpubLoaded: (data: EpubData) => void;
   onError: (error: string) => void;
 }
 
-export const EpubUploader: React.FC<EpubUploaderProps> = ({ onSentencesLoaded, onError }) => {
+export const EpubUploader: React.FC<EpubUploaderProps> = ({ onEpubLoaded, onError }) => {
   const [loading, setLoading] = useState(false);
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -16,11 +17,11 @@ export const EpubUploader: React.FC<EpubUploaderProps> = ({ onSentencesLoaded, o
     
     setLoading(true);
     try {
-      const sentences = await parseEpub(file);
-      if (sentences.length === 0) {
+      const data = await parseEpub(file);
+      if (data.sentences.length === 0) {
         onError("No text found in EPUB. It might be heavily image-based.");
       } else {
-        onSentencesLoaded(sentences);
+        onEpubLoaded(data);
       }
     } catch (err: any) {
       onError(err.message || "Failed to parse EPUB");
