@@ -28,6 +28,12 @@ const AnkiIcon = () => (
   </svg>
 );
 
+const BookmarkIcon = ({ filled }: { filled: boolean }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+  </svg>
+);
+
 
 interface TranslationPanelProps {
   activeSentence: string;
@@ -35,6 +41,7 @@ interface TranslationPanelProps {
   metadata?: BookMetadata;
   ankiField?: string;
   onAnkiMine: (sentence: string) => void;
+  isBookmarked: boolean;
   readerActions: ReaderActions;
   t: any;
 }
@@ -45,10 +52,11 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({
   metadata, 
   ankiField = '', 
   onAnkiMine,
+  isBookmarked,
   readerActions,
   t 
 }) => {
-  const { translation, loading, ankiLoading, toast, translate, copy, mineAnki } = readerActions;
+  const { translation, loading, ankiLoading, toast, translate, copy, mineAnki, toggleBookmark } = readerActions;
 
   return (
     <>
@@ -56,7 +64,7 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({
         <div style={{ display: 'flex', gap: '10px' }}>
           <button 
             onClick={() => translate(activeSentence)}
-            title="Translate Active Sentence [T]"
+            title={t.translateTooltip}
             style={{
               background: 'var(--btn-bg)',
               color: 'var(--btn-text)',
@@ -86,7 +94,7 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({
   
           <button 
             onClick={() => copy(activeSentence, t)}
-            title="Copy Active Sentence [C]"
+            title={t.copyTooltip}
             style={{
               background: 'var(--btn-bg)',
               color: 'var(--btn-text)',
@@ -107,10 +115,33 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({
             <CopyIcon />
           </button>
 
+          <button 
+            onClick={() => toggleBookmark()}
+            title={t.bookmarkTooltip}
+            style={{
+              background: 'var(--btn-bg)',
+              color: isBookmarked ? '#f59e0b' : 'var(--btn-text)',
+              padding: '8px 12px',
+              borderRadius: '0', 
+              cursor: 'pointer',
+              boxShadow: 'var(--btn-shadow)',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: isBookmarked ? 1 : 0.4,
+              transition: 'opacity 0.3s ease, background 0.3s, color 0.3s, box-shadow 0.3s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+            onMouseLeave={e => e.currentTarget.style.opacity = isBookmarked ? '1' : '0.4'}
+          >
+            <BookmarkIcon filled={isBookmarked} />
+          </button>
+
           {!isMobile && (
             <button 
               onClick={() => mineAnki(activeSentence, metadata, ankiField, onAnkiMine, t)}
-              title="Update Latest Anki Card [A]"
+              title={t.ankiTooltip}
               style={{
                 background: 'var(--btn-bg)',
                 color: 'var(--btn-text)',

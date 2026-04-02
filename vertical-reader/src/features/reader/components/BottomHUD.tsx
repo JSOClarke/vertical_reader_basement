@@ -14,6 +14,7 @@ interface BottomHUDProps {
   ankiField?: string;
   onAnkiMine: (sentence: string) => void;
   onOpenJump: () => void;
+  isBookmarked?: boolean;
   readerActions: ReaderActions;
   t: any;
 }
@@ -26,6 +27,7 @@ export const BottomHUD: React.FC<BottomHUDProps> = React.memo(({
   ankiField = '',
   onAnkiMine,
   onOpenJump,
+  isBookmarked = false,
   readerActions,
   t
 }) => {
@@ -74,6 +76,7 @@ export const BottomHUD: React.FC<BottomHUDProps> = React.memo(({
           metadata={metadata} 
           ankiField={ankiField}
           onAnkiMine={onAnkiMine}
+          isBookmarked={isBookmarked}
           readerActions={readerActions}
           t={t}
         />

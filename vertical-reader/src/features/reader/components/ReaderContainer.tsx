@@ -4,7 +4,7 @@ import { useReaderState } from '../hooks/useReaderState';
 import { useScrollCenter } from '../hooks/useScrollCenter';
 import type { ReaderProps } from '../../../types';
 
-export const ReaderContainer: React.FC<ReaderProps> = ({ sentences, activeIndex, onIndexChange, tapToSelect, showArrows, centerActive, onOpenJump }) => {
+export const ReaderContainer: React.FC<ReaderProps> = ({ sentences, activeIndex, onIndexChange, tapToSelect, showArrows, centerActive, minedSentences, bookmarks, onOpenJump }) => {
   useReaderState(sentences.length, onIndexChange);
   const { assignRef } = useScrollCenter(activeIndex, sentences.length, centerActive);
 
@@ -17,6 +17,8 @@ export const ReaderContainer: React.FC<ReaderProps> = ({ sentences, activeIndex,
       showArrows={showArrows}
       assignRef={assignRef}
       centerActive={centerActive}
+      minedSentences={minedSentences}
+      bookmarks={bookmarks}
       onOpenJump={onOpenJump}
     />
   );

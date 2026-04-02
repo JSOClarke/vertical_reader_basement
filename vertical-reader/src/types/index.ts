@@ -1,6 +1,8 @@
 export interface SentenceProps {
   text: string;
   isActive: boolean;
+  isMined?: boolean;
+  isBookmarked?: boolean;
   onClick: () => void;
   tapToSelect: boolean;
 }
@@ -8,6 +10,8 @@ export interface SentenceProps {
 export interface ReaderProps {
   sentences: string[];
   activeIndex: number;
+  minedSentences?: Set<string>;
+  bookmarks?: number[];
   onIndexChange: (index: number | ((prev: number) => number)) => void;
   tapToSelect: boolean;
   showArrows: boolean;
@@ -39,4 +43,5 @@ export interface UserProfile {
   metadata?: BookMetadata;
   ankiField?: string;
   stats?: UserStats;
+  bookmarks?: number[];
 }

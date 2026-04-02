@@ -10,10 +10,11 @@ export interface ReaderActions {
   translate: (sentence: string) => Promise<void>;
   copy: (sentence: string, t: any) => Promise<void>;
   mineAnki: (sentence: string, metadata: BookMetadata | undefined, ankiField: string, onAnkiMine: (s: string) => void, t: any) => Promise<void>;
+  toggleBookmark: () => void;
   clearTranslation: () => void;
 }
 
-export const useReaderActions = (): ReaderActions => {
+export const useReaderActions = (onToggleBookmark: () => void): ReaderActions => {
   const [translation, setTranslation] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [ankiLoading, setAnkiLoading] = useState(false);
@@ -88,6 +89,7 @@ export const useReaderActions = (): ReaderActions => {
     translate,
     copy,
     mineAnki,
+    toggleBookmark: onToggleBookmark,
     clearTranslation
   };
 };

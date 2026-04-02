@@ -3,20 +3,29 @@ export type Language = 'en' | 'ja';
 export const translations = {
   en: {
     // Menu
-    lightMode: '☀ Light Mode',
-    darkMode: '● Dark Mode',
+    lightMode: 'Light Mode',
+    darkMode: 'Dark Mode',
     tapSelect: 'Tap Select',
     showArrows: 'Show Arrows',
-    viewStats: '📈 View Stats',
+    viewStats: 'View Stats',
     exportProfile: 'Export Profile',
     importProfile: 'Import Profile',
     loadEpub: 'Load EPUB',
     ankiSettings: 'Anki Settings',
-    languageLabel: '🌐 Language: EN',
+    languageLabel: 'Language',
     centerActive: 'Center Active',
     jumpToTitle: 'Jump to Position',
     jumpToSentence: 'Sentence #',
     go: 'Go',
+    displaySettings: 'Display',
+    readingSettings: 'Reading',
+    dataActions: 'Data Actions',
+
+    // Action Tooltips
+    translateTooltip: 'Translate Active Sentence [T]',
+    copyTooltip: 'Copy Active Sentence [C]',
+    ankiTooltip: 'Update Latest Anki Card [A]',
+    bookmarkTooltip: 'Toggle Bookmark [B]',
 
     // Stats View
     statsTitle: 'Reading Statistics',
@@ -51,30 +60,39 @@ export const translations = {
     // Toasts
     copiedToast: 'Copied to clipboard!',
     copyFailToast: 'Failed to copy',
-    setAnkiFieldToast: 'Set Anki field in ☰ menu first',
+    setAnkiFieldToast: 'Set Anki field in menu first',
     ankiSuccessToast: 'Anki card updated successfully!',
     ankiFailToast: 'Anki update failed',
 
     // Reset
-    resetReader: 'Reset Reader',
+    resetReader: 'Reset All Data',
     confirmReset: 'Are you sure you want to delete ALL data (books, stats, and settings)? This cannot be undone.',
   },
   ja: {
     // Menu
-    lightMode: '☀ ライトモード',
-    darkMode: '● ダークモード',
+    lightMode: 'ライトモード',
+    darkMode: 'ダークモード',
     tapSelect: 'タップ選択',
     showArrows: '矢印を表示',
-    viewStats: '📈 読書データ',
+    viewStats: '読書データ',
     exportProfile: 'エクスポート',
     importProfile: 'インポート',
     loadEpub: 'EPUBを開く',
     ankiSettings: 'Anki設定',
-    languageLabel: '🌐 言語: 日本語',
+    languageLabel: '言語',
     centerActive: '文章を中央に表示',
     jumpToTitle: 'ページ移動',
     jumpToSentence: '文番号',
     go: '移動',
+    displaySettings: '表示設定',
+    readingSettings: '読書設定',
+    dataActions: 'データ操作',
+
+    // Action Tooltips
+    translateTooltip: '現在の文章を翻訳 [T]',
+    copyTooltip: 'クリップボードにコピー [C]',
+    ankiTooltip: 'Ankiカードを更新 [A]',
+    bookmarkTooltip: 'しおりを付ける [B]',
 
     // Stats View
     statsTitle: '読書統計',
@@ -109,7 +127,7 @@ export const translations = {
     // Toasts
     copiedToast: 'クリップボードにコピーしました！',
     copyFailToast: 'コピーに失敗しました',
-    setAnkiFieldToast: '先に ☰ メニューから対象フィールドを設定してください',
+    setAnkiFieldToast: '先にメニューから対象フィールドを設定してください',
     ankiSuccessToast: 'Ankiカードが正常に更新されました！',
     ankiFailToast: 'Ankiの更新に失敗しました',
 

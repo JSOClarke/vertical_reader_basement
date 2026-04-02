@@ -16,7 +16,8 @@ export const ReaderView: React.FC<ReaderViewProps> = React.memo(({
   tapToSelect,
   showArrows,
   centerActive,
-  onOpenJump,
+  minedSentences,
+  bookmarks,
   assignRef
 }) => {
   const goNext = useCallback(() => {
@@ -42,6 +43,8 @@ export const ReaderView: React.FC<ReaderViewProps> = React.memo(({
             key={idx}
             ref={assignRef(idx)}
             text={text}
+            isMined={minedSentences?.has(text)}
+            isBookmarked={bookmarks?.includes(idx)}
             isActive={idx === activeIndex}
             onClick={() => onIndexChange(idx)}
             tapToSelect={tapToSelect}

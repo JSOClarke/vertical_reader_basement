@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { ReaderContainer } from './features/reader/components/ReaderContainer';
 import { BottomHUD } from './features/reader/components/BottomHUD';
@@ -12,6 +12,50 @@ import { translations } from './localization/translations';
 import type { Language } from './localization/translations';
 import type { BookMetadata, UserProfile, UserStats } from './types';
 import './App.css'; 
+
+const MenuIcon = ({ open }: { open: boolean }) => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    {open ? (
+      <>
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </>
+    ) : (
+      <>
+        <line x1="3" y1="12" x2="21" y2="12" />
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <line x1="3" y1="18" x2="21" y2="18" />
+      </>
+    )}
+  </svg>
+);
+
+const StatusDot = ({ active }: { active: boolean }) => (
+  <div style={{
+    width: '6px',
+    height: '6px',
+    borderRadius: '50%',
+    background: active ? '#f59e0b' : 'rgba(128,128,128,0.3)',
+    marginLeft: 'auto',
+    transition: 'background 0.3s ease',
+    boxShadow: active ? '0 0 8px rgba(245,158,11,0.4)' : 'none'
+  }} />
+);
+
+const MenuCategory = ({ label }: { label: string }) => (
+  <div style={{
+    padding: '12px 20px 6px',
+    fontSize: '10px',
+    fontWeight: '700',
+    letterSpacing: '0.1em',
+    color: 'rgba(128,128,128,0.6)',
+    textTransform: 'uppercase',
+    borderTop: '1px solid rgba(128,128,128,0.1)',
+    marginTop: '4px'
+  }}>
+    {label}
+  </div>
+);
 
 const LEGACY_STORAGE_KEY = 'vertical-reader-profile';
 const PROFILE_STORAGE_KEY = 'tateyomi-profile';
@@ -42,7 +86,9 @@ function App() {
   const [metadata, setMetadata] = useState<BookMetadata | undefined>(saved.current?.metadata);
   const [error, setError] = useState<string | null>(null);
 
-  const readerActions = useReaderActions();
+  const readerActions = useReaderActions(() => handleToggleBookmark());
+
+  const [bookmarks, setBookmarks] = useState<number[]>(saved.current?.bookmarks ?? []);
 
   // Stats
   const [stats, setStats] = useState<UserStats>({
@@ -62,6 +108,32 @@ function App() {
   const [ankiModalOpen, setAnkiModalOpen] = useState(false);
   const [isJumpModalOpen, setJumpModalOpen] = useState(false);
 
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (mobileMenuOpen && menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [mobileMenuOpen]);
+
+  const minedSentencesSet = useMemo(() => {
+    const currentTitle = metadata?.title || 'Unknown Book';
+    const set = new Set<string>();
+    if (stats.miningHistory) {
+      stats.miningHistory.forEach(card => {
+        if (card.bookTitle === currentTitle) {
+          set.add(card.sentence);
+        }
+      });
+    }
+    return set;
+  }, [stats.miningHistory, metadata?.title]);
+
   // Language
   const [language, setLanguage] = useState<Language>(() => {
     return (localStorage.getItem('language') as Language) || 'en';
@@ -79,14 +151,14 @@ function App() {
   useEffect(() => {
     const timeout = setTimeout(() => {
       try {
-        const profile: UserProfile = { sentences: bookData, activeIndex, metadata, ankiField, stats };
+        const profile: UserProfile = { sentences: bookData, activeIndex, metadata, ankiField, stats, bookmarks };
         localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
       } catch {
         // localStorage full or unavailable — silently ignore
       }
     }, 500);
     return () => clearTimeout(timeout);
-  }, [bookData, activeIndex, metadata, ankiField, stats]);
+  }, [bookData, activeIndex, metadata, ankiField, stats, bookmarks]);
 
   // Track reading stats (characters and days)
   useEffect(() => {
@@ -104,6 +176,7 @@ function App() {
           : [...prev.readingDays, dateStr];
           
         return {
+          ...prev,
           totalCharactersRead: prev.totalCharactersRead + addedChars,
           readingDays: newDays
         };
@@ -122,6 +195,125 @@ function App() {
     readerActions.clearTranslation();
   }, [activeIndex, bookData, readerActions.clearTranslation]);
 
+  const renderMenuContent = () => (
+    <>
+      <MenuCategory label={t.displaySettings || "Display"} />
+      <button onClick={() => toggleTheme()} style={menuItemStyle}>
+        {theme === 'dark' ? t.lightMode : t.darkMode}
+      </button>
+      <button onClick={() => toggleLanguage()} style={menuItemStyle}>
+        {language === 'en' ? 'Language: EN' : '言語: 日本語'}
+      </button>
+      
+      <MenuCategory label={t.readingSettings || "Reading"} />
+      <button onClick={() => toggleTapToSelect()} style={menuItemStyle}>
+        {t.tapSelect}
+        <StatusDot active={tapToSelect} />
+      </button>
+      <button onClick={() => toggleArrows()} style={menuItemStyle}>
+        {t.showArrows}
+        <StatusDot active={showArrows} />
+      </button>
+      <button onClick={() => toggleCenterActive()} style={menuItemStyle}>
+        {t.centerActive}
+        <StatusDot active={centerActive} />
+      </button>
+
+      <MenuCategory label={t.dataActions || "Actions"} />
+      <button onClick={() => { setCurrentView('stats'); setMobileMenuOpen(false); }} style={menuItemStyle}>
+        {t.viewStats}
+      </button>
+      <button
+        onClick={() => {
+          if (bookData.length === 0) { alert(t.noDataLoaded); return; }
+          const profile: UserProfile = { sentences: bookData, activeIndex, metadata, ankiField, stats, bookmarks };
+          const blob = new Blob([JSON.stringify(profile)], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `reader-profile-${new Date().toISOString().split('T')[0]}.json`;
+          link.click();
+          URL.revokeObjectURL(url);
+          setMobileMenuOpen(false);
+        }}
+        style={menuItemStyle}
+      >
+        {t.exportProfile}
+      </button>
+      
+      <label style={{ ...menuItemStyle, cursor: 'pointer' }}>
+        {t.importProfile}
+        <input type="file" accept=".json" onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            try {
+              const json = JSON.parse(ev.target?.result as string);
+              if (Array.isArray(json.sentences) && typeof json.activeIndex === 'number') {
+                setBookData(json.sentences);
+                setActiveIndex(json.activeIndex);
+                setMetadata(json.metadata);
+                if (json.ankiField) setAnkiField(json.ankiField);
+                if (json.stats) setStats(json.stats);
+                setError(null);
+              } else { alert(t.invalidProfile); }
+            } catch { alert(t.failedParseProfile); }
+          };
+          reader.readAsText(file);
+          e.target.value = '';
+          setMobileMenuOpen(false);
+        }} style={{ display: 'none' }} />
+      </label>
+
+      <label style={{ ...menuItemStyle, cursor: 'pointer' }}>
+        {t.loadEpub}
+        <input type="file" accept=".epub" onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          try {
+            const { parseEpub } = await import('./features/epub/utils/epubParser');
+            const data = await parseEpub(file);
+            if (data.sentences.length === 0) {
+              setError(t.noTextInEpub);
+            } else {
+              setBookData(data.sentences);
+              setMetadata(data.metadata);
+              setActiveIndex(0);
+              setError(null);
+            }
+          } catch (err: any) {
+            setError(t.failedParseEpub);
+          }
+          e.target.value = '';
+          setMobileMenuOpen(false);
+        }} style={{ display: 'none' }} />
+      </label>
+
+      <MenuCategory label="Integrations" />
+      <button
+        onClick={() => { setAnkiModalOpen(true); setMobileMenuOpen(false); }}
+        style={menuItemStyle}
+      >
+        {t.ankiSettings}
+      </button>
+
+      <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(128,128,128,0.1)' }}>
+        <button 
+          onClick={() => {
+            if (window.confirm(t.confirmReset)) {
+              localStorage.clear();
+              window.location.reload();
+            }
+          }} 
+          style={{ ...menuItemStyle, color: '#ff4b4b', borderBottom: 'none' }}
+        >
+          {t.resetReader}
+        </button>
+      </div>
+    </>
+  );
+
   const handleAnkiMine = (sentence: string) => {
     setStats(prev => ({
       ...prev,
@@ -136,10 +328,20 @@ function App() {
     }));
   };
 
+  const handleToggleBookmark = () => {
+    setBookmarks(prev => {
+      if (prev.includes(activeIndex)) {
+        return prev.filter(i => i !== activeIndex);
+      }
+      return [...prev, activeIndex].sort((a, b) => a - b);
+    });
+  };
+
   useKeyboardShortcuts({
     'T': () => readerActions.translate(bookData[activeIndex]),
     'C': () => readerActions.copy(bookData[activeIndex], t),
     'A': () => readerActions.mineAnki(bookData[activeIndex], metadata, ankiField, handleAnkiMine, t),
+    'B': () => handleToggleBookmark(),
   });
 
   const handleJumpToIndex = (index: number) => {
@@ -202,6 +404,8 @@ function App() {
             tapToSelect={tapToSelect}
             showArrows={showArrows}
             centerActive={centerActive}
+            minedSentences={minedSentencesSet}
+            bookmarks={bookmarks}
             onOpenJump={() => setJumpModalOpen(true)}
           />
           
@@ -213,6 +417,7 @@ function App() {
             ankiField={ankiField}
             onAnkiMine={handleAnkiMine}
             onOpenJump={() => setJumpModalOpen(true)}
+            isBookmarked={bookmarks.includes(activeIndex)}
             readerActions={readerActions}
             t={t}
           />
@@ -222,19 +427,21 @@ function App() {
       )}
       
       {!isMobile && (
-        <div style={{
-          position: 'fixed',
-          top: '30px',
-          left: '30px',
-          zIndex: 2000,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          opacity: mobileMenuOpen ? 1 : 0.3,
-          transition: 'opacity 0.3s ease'
-        }}
-        onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-        onMouseLeave={e => { if (!mobileMenuOpen) e.currentTarget.style.opacity = '0.3'; }}
+        <div 
+          ref={menuRef}
+          style={{
+            position: 'fixed',
+            top: '30px',
+            left: '30px',
+            zIndex: 2000,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            opacity: mobileMenuOpen ? 1 : 0.3,
+            transition: 'opacity 0.3s ease'
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+          onMouseLeave={e => { if (!mobileMenuOpen) e.currentTarget.style.opacity = '0.3'; }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button 
@@ -242,16 +449,18 @@ function App() {
               style={{
                 background: 'var(--btn-bg)',
                 color: 'var(--btn-text)',
-                padding: '10px 15px',
+                padding: '12px',
                 borderRadius: '0',
                 boxShadow: 'var(--btn-shadow)',
                 border: 'none',
                 cursor: 'pointer',
-                fontWeight: 'bold',
-                fontFamily: 'sans-serif'
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background 0.3s',
               }}
             >
-              {mobileMenuOpen ? '✕' : '☰'}
+              <MenuIcon open={mobileMenuOpen} />
             </button>
             <img 
               src="/favicon.png" 
@@ -267,144 +476,52 @@ function App() {
 
           {mobileMenuOpen && (
             <div style={{
-              marginTop: '5px',
+              marginTop: '8px',
               background: 'var(--btn-bg)',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+              boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
               display: 'flex',
               flexDirection: 'column',
-              minWidth: '180px',
-              overflow: 'hidden'
+              minWidth: '220px',
+              overflow: 'hidden',
+              animation: 'fadeSlideDown 0.3s ease-out forwards',
+              border: '1px solid rgba(128,128,128,0.1)'
             }}>
-              <button onClick={() => { toggleTheme(); }} style={menuItemStyle}>
-                {theme === 'dark' ? t.lightMode : t.darkMode}
-              </button>
-              <button onClick={() => { toggleLanguage(); }} style={menuItemStyle}>
-                {language === 'en' ? '🌐 Language: EN' : '🌐 言語: 日本語'}
-              </button>
-              <button onClick={() => { toggleTapToSelect(); }} style={menuItemStyle}>
-                {tapToSelect ? `● ${t.tapSelect}` : `○ ${t.tapSelect}`}
-              </button>
-              <button onClick={() => { toggleArrows(); }} style={menuItemStyle}>
-                {showArrows ? `● ${t.showArrows}` : `○ ${t.showArrows}`}
-              </button>
-              <button onClick={() => { toggleCenterActive(); }} style={menuItemStyle}>
-                {centerActive ? `● ${t.centerActive}` : `○ ${t.centerActive}`}
-              </button>
-              <button onClick={() => { setCurrentView('stats'); setMobileMenuOpen(false); }} style={menuItemStyle}>
-                {t.viewStats}
-              </button>
-              <button
-                onClick={() => {
-                  if (bookData.length === 0) { alert(t.noDataLoaded); return; }
-                  const profile = { sentences: bookData, activeIndex, metadata, ankiField, stats };
-                  const blob = new Blob([JSON.stringify(profile)], { type: "application/json" });
-                  const url = URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.download = `reader-profile-${new Date().toISOString().split('T')[0]}.json`;
-                  link.click();
-                  URL.revokeObjectURL(url);
-                  setMobileMenuOpen(false);
-                }}
-                style={menuItemStyle}
-              >
-                {t.exportProfile}
-              </button>
-              <label style={{ ...menuItemStyle, cursor: 'pointer' }}>
-                {t.importProfile}
-                <input type="file" accept=".json" onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  const reader = new FileReader();
-                  reader.onload = (ev) => {
-                    try {
-                      const json = JSON.parse(ev.target?.result as string);
-                      if (Array.isArray(json.sentences) && typeof json.activeIndex === 'number') {
-                        setBookData(json.sentences);
-                        setActiveIndex(json.activeIndex);
-                        setMetadata(json.metadata);
-                        if (json.ankiField) setAnkiField(json.ankiField);
-                        if (json.stats) setStats(json.stats);
-                        setError(null);
-                      } else { alert(t.invalidProfile); }
-                    } catch { alert(t.failedParseProfile); }
-                  };
-                  reader.readAsText(file);
-                  e.target.value = '';
-                  setMobileMenuOpen(false);
-                }} style={{ display: 'none' }} />
-              </label>
-              <label style={{ ...menuItemStyle, cursor: 'pointer' }}>
-                {t.loadEpub}
-                <input type="file" accept=".epub" onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  try {
-                    const { parseEpub } = await import('./features/epub/utils/epubParser');
-                    const data = await parseEpub(file);
-                    if (data.sentences.length === 0) {
-                      setError(t.noTextInEpub);
-                    } else {
-                      setBookData(data.sentences);
-                      setMetadata(data.metadata);
-                      setActiveIndex(0);
-                      setError(null);
-                    }
-                  } catch (err: any) {
-                    setError(t.failedParseEpub);
-                  }
-                  e.target.value = '';
-                  setMobileMenuOpen(false);
-                }} style={{ display: 'none' }} />
-              </label>
-              <button
-                onClick={() => { setAnkiModalOpen(true); setMobileMenuOpen(false); }}
-                style={menuItemStyle}
-              >
-                {t.ankiSettings}
-              </button>
-              <button 
-                onClick={() => {
-                  if (window.confirm(t.confirmReset)) {
-                    localStorage.clear();
-                    window.location.reload();
-                  }
-                }} 
-                style={{ ...menuItemStyle, color: '#ff4444', borderTop: '1px solid rgba(255,255,255,0.1)' }}
-              >
-                ⚠ {t.resetReader}
-              </button>
+              {renderMenuContent()}
             </div>
           )}
         </div>
       )}
 
       {isMobile && (
-        <div style={{
-          position: 'fixed',
-          top: '15px',
-          left: '15px',
-          zIndex: 2000,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-        }}>
+        <div 
+          ref={menuRef}
+          style={{
+            position: 'fixed',
+            top: '15px',
+            left: '15px',
+            zIndex: 2000,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               style={{
                 background: 'var(--btn-bg)',
                 color: 'var(--btn-text)',
-                padding: '10px 15px',
+                padding: '12px',
                 borderRadius: '0',
                 boxShadow: 'var(--btn-shadow)',
                 border: 'none',
                 cursor: 'pointer',
-                fontWeight: 'bold',
-                fontFamily: 'sans-serif'
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              {mobileMenuOpen ? '✕' : '☰'}
+              <MenuIcon open={mobileMenuOpen} />
             </button>
             <img 
               src="/favicon.png" 
@@ -419,118 +536,17 @@ function App() {
 
           {mobileMenuOpen && (
             <div style={{
-              marginTop: '5px',
+              marginTop: '8px',
               background: 'var(--btn-bg)',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+              boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
               display: 'flex',
               flexDirection: 'column',
-              minWidth: '180px',
-              overflow: 'hidden'
+              minWidth: '220px',
+              overflow: 'hidden',
+              animation: 'fadeSlideDown 0.3s ease-out forwards',
+              border: '1px solid rgba(128,128,128,0.1)'
             }}>
-              <button
-                onClick={() => { toggleTheme(); }}
-                style={menuItemStyle}
-              >
-                {theme === 'dark' ? t.lightMode : t.darkMode}
-              </button>
-              <button onClick={() => { toggleLanguage(); }} style={menuItemStyle}>
-                {language === 'en' ? '🌐 Language: EN' : '🌐 言語: 日本語'}
-              </button>
-              <button
-                onClick={() => { toggleTapToSelect(); }}
-                style={menuItemStyle}
-              >
-                {tapToSelect ? `● ${t.tapSelect}` : `○ ${t.tapSelect}`}
-              </button>
-              <button
-                onClick={() => { toggleArrows(); }}
-                style={menuItemStyle}
-              >
-                {showArrows ? `● ${t.showArrows}` : `○ ${t.showArrows}`}
-              </button>
-              <button onClick={() => { setCurrentView('stats'); setMobileMenuOpen(false); }} style={menuItemStyle}>
-                {t.viewStats}
-              </button>
-              <button
-                onClick={() => {
-                  if (bookData.length === 0) { alert(t.noDataLoaded); return; }
-                  const profile = { sentences: bookData, activeIndex, metadata, ankiField, stats };
-                  const blob = new Blob([JSON.stringify(profile)], { type: "application/json" });
-                  const url = URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.download = `reader-profile-${new Date().toISOString().split('T')[0]}.json`;
-                  link.click();
-                  URL.revokeObjectURL(url);
-                  setMobileMenuOpen(false);
-                }}
-                style={menuItemStyle}
-              >
-                {t.exportProfile}
-              </button>
-              <label style={{ ...menuItemStyle, cursor: 'pointer' }}>
-                {t.importProfile}
-                <input 
-                  type="file" 
-                  accept=".json" 
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = (ev) => {
-                      try {
-                        const json = JSON.parse(ev.target?.result as string);
-                        if (Array.isArray(json.sentences) && typeof json.activeIndex === 'number') {
-                          setBookData(json.sentences);
-                          setActiveIndex(json.activeIndex);
-                          setMetadata(json.metadata);
-                          if (json.ankiField) setAnkiField(json.ankiField);
-                          if (json.stats) setStats(json.stats);
-                          setError(null);
-                        } else { alert(t.invalidProfile); }
-                      } catch { alert(t.failedParseProfile); }
-                    };
-                    reader.readAsText(file);
-                    e.target.value = '';
-                    setMobileMenuOpen(false);
-                  }}
-                  style={{ display: 'none' }} 
-                />
-              </label>
-              <label style={{ ...menuItemStyle, cursor: 'pointer' }}>
-                {t.loadEpub}
-                <input 
-                  type="file" 
-                  accept=".epub" 
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    try {
-                      const { parseEpub } = await import('./features/epub/utils/epubParser');
-                      const data = await parseEpub(file);
-                      if (data.sentences.length === 0) {
-                        setError(t.noTextInEpub);
-                      } else {
-                        setBookData(data.sentences);
-                        setMetadata(data.metadata);
-                        setActiveIndex(0);
-                        setError(null);
-                      }
-                    } catch (err: any) {
-                      setError(t.failedParseEpub);
-                    }
-                    e.target.value = '';
-                    setMobileMenuOpen(false);
-                  }}
-                  style={{ display: 'none' }} 
-                />
-              </label>
-              <button
-                onClick={() => { setAnkiModalOpen(true); setMobileMenuOpen(false); }}
-                style={menuItemStyle}
-              >
-                {t.ankiSettings}
-              </button>
+              {renderMenuContent()}
             </div>
           )}
         </div>
@@ -566,17 +582,19 @@ function App() {
 const menuItemStyle: React.CSSProperties = {
   background: 'transparent',
   color: 'var(--btn-text)',
-  padding: '14px 20px',
+  padding: '14px 24px',
   border: 'none',
-  borderBottom: '1px solid rgba(128,128,128,0.15)',
-  fontSize: '14px',
-  fontFamily: 'sans-serif',
+  borderBottom: '1px solid rgba(128,128,128,0.08)',
+  fontSize: '13px',
+  fontFamily: 'Inter, system-ui, sans-serif',
   fontWeight: '500',
   textAlign: 'left',
   cursor: 'pointer',
-  transition: 'background 0.2s ease',
-  display: 'block',
+  transition: 'all 0.2s ease',
+  display: 'flex',
+  alignItems: 'center',
   width: '100%',
+  gap: '12px'
 };
 
 export default App;
