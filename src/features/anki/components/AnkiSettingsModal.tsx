@@ -64,6 +64,29 @@ export const AnkiSettingsModal: React.FC<AnkiSettingsModalProps> = ({ ankiField,
           {t.ankiDescription}
         </p>
 
+        {/* CORS Whitelist Hint */}
+        <div style={{
+          background: 'rgba(245,158,11,0.08)',
+          border: '1px solid rgba(245,158,11,0.2)',
+          padding: '12px',
+          marginBottom: '20px',
+        }}>
+          <p style={{ fontSize: '11px', margin: '0 0 8px 0', lineHeight: '1.4', color: '#f59e0b' }}>
+            {t.ankiWhitelistHint}
+          </p>
+          <code style={{ 
+            display: 'block', 
+            fontSize: '10px', 
+            background: 'rgba(0,0,0,0.2)', 
+            padding: '6px', 
+            userSelect: 'all',
+            fontFamily: 'monospace',
+            opacity: 0.8
+          }}>
+            {t.ankiWhitelistUrl}
+          </code>
+        </div>
+
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
           <button
             onClick={onClose}

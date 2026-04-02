@@ -667,7 +667,10 @@ function App() {
               display: 'flex',
               flexDirection: 'column',
               minWidth: '220px',
-              overflow: 'hidden',
+              maxHeight: 'calc(100vh - 120px)',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              WebkitOverflowScrolling: 'touch',
               animation: 'fadeSlideDown 0.3s ease-out forwards',
               border: '1px solid rgba(128,128,128,0.1)'
             }}>
@@ -794,15 +797,6 @@ function App() {
             >
               <MenuIcon open={mobileMenuOpen} />
             </button>
-            <img 
-              src="/favicon.png" 
-              alt="Tateyomi" 
-              style={{
-                width: '36px',
-                height: '36px',
-                boxShadow: 'var(--btn-shadow)'
-              }}
-            />
           </div>
 
           {mobileMenuOpen && (
@@ -813,7 +807,10 @@ function App() {
               display: 'flex',
               flexDirection: 'column',
               minWidth: '220px',
-              overflow: 'hidden',
+              maxHeight: 'calc(100vh - 100px)',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              WebkitOverflowScrolling: 'touch',
               animation: 'fadeSlideDown 0.3s ease-out forwards',
               border: '1px solid rgba(128,128,128,0.1)'
             }}>

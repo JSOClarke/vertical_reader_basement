@@ -48,6 +48,8 @@ export const translations = {
     targetFieldLabel: 'Target Note Field',
     targetFieldPlaceholder: 'e.g. Back, Extra, Picture',
     ankiDescription: 'The EPUB cover image will be appended to this field on your most recent Anki card.',
+    ankiWhitelistHint: "Hosted on Netlify? Ensure you whitelist this URL in AnkiConnect's 'webCorsOriginList' config:",
+    ankiWhitelistUrl: 'https://tateyomireader.netlify.app',
     cancel: 'Cancel',
     save: 'Save',
 
@@ -128,6 +130,8 @@ export const translations = {
     targetFieldLabel: '対象フィールド',
     targetFieldPlaceholder: '例：Back, Extra, Picture',
     ankiDescription: '最近のAnkiカードにEPUBの表紙画像を追加します。',
+    ankiWhitelistHint: "Netlifyでホストしていますか？ AnkiConnectの 'webCorsOriginList' 設定に以下のURLをホワイトリスト登録する必要があります：",
+    ankiWhitelistUrl: 'https://tateyomireader.netlify.app',
     cancel: 'キャンセル',
     save: '保存',
 
