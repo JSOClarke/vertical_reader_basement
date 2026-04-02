@@ -37,6 +37,12 @@ export interface UserStats {
   miningHistory?: MinedCard[];
 }
 
+export interface ReaderAesthetics {
+  fontSize: number;      // px
+  lineSpacing: number;   // px (gutter between columns)
+  verticalMargin: number; // vh (padding top/bottom)
+}
+
 export interface UserProfile {
   sentences: string[];
   activeIndex: number;
@@ -44,4 +50,5 @@ export interface UserProfile {
   ankiField?: string;
   stats?: UserStats;
   bookmarks?: number[];
+  aesthetics?: ReaderAesthetics;
 }

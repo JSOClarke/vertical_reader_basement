@@ -10,7 +10,7 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { SAMPLE_DATA } from './data/mockBook';
 import { translations } from './localization/translations';
 import type { Language } from './localization/translations';
-import type { BookMetadata, UserProfile, UserStats } from './types';
+import type { BookMetadata, UserProfile, UserStats, ReaderAesthetics } from './types';
 import './App.css'; 
 
 const MenuIcon = ({ open }: { open: boolean }) => (
@@ -54,6 +54,30 @@ const MenuCategory = ({ label }: { label: string }) => (
     marginTop: '4px'
   }}>
     {label}
+  </div>
+);
+
+const ValueStepper = ({ label, value, unit = '', onDecrease, onIncrease }: { 
+  label: string, 
+  value: number, 
+  unit?: string,
+  onDecrease: () => void, 
+  onIncrease: () => void 
+}) => (
+  <div style={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    padding: '10px 20px',
+    fontSize: '13px',
+    color: 'var(--btn-text)'
+  }}>
+    <span style={{ opacity: 0.8 }}>{label}</span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+      <button onClick={onDecrease} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '16px', padding: '5px' }}>−</button>
+      <span style={{ minWidth: '35px', textAlign: 'center', fontWeight: 'bold' }}>{value}{unit}</span>
+      <button onClick={onIncrease} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '16px', padding: '5px' }}>+</button>
+    </div>
   </div>
 );
 
@@ -108,6 +132,12 @@ function App() {
   const [ankiModalOpen, setAnkiModalOpen] = useState(false);
   const [isJumpModalOpen, setJumpModalOpen] = useState(false);
 
+  const [aesthetics, setAesthetics] = useState<ReaderAesthetics>(saved.current?.aesthetics ?? {
+    fontSize: 28,
+    lineSpacing: 40,
+    verticalMargin: 10
+  });
+
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu when clicking outside
@@ -151,7 +181,15 @@ function App() {
   useEffect(() => {
     const timeout = setTimeout(() => {
       try {
-        const profile: UserProfile = { sentences: bookData, activeIndex, metadata, ankiField, stats, bookmarks };
+        const profile: UserProfile = { 
+          sentences: bookData, 
+          activeIndex, 
+          metadata, 
+          ankiField, 
+          stats, 
+          bookmarks,
+          aesthetics
+        };
         localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
       } catch {
         // localStorage full or unavailable — silently ignore
@@ -204,6 +242,29 @@ function App() {
       <button onClick={() => toggleLanguage()} style={menuItemStyle}>
         {language === 'en' ? 'Language: EN' : '言語: 日本語'}
       </button>
+
+      <MenuCategory label={t.aestheticsSettings || "Aesthetics"} />
+      <ValueStepper 
+        label={t.fontSizeLabel || "Font Size"} 
+        value={aesthetics.fontSize} 
+        unit="px"
+        onDecrease={() => setAesthetics(prev => ({ ...prev, fontSize: Math.max(12, prev.fontSize - 2) }))}
+        onIncrease={() => setAesthetics(prev => ({ ...prev, fontSize: Math.min(48, prev.fontSize + 2) }))}
+      />
+      <ValueStepper 
+        label={t.lineSpacingLabel || "Line Spacing"} 
+        value={aesthetics.lineSpacing} 
+        unit="px"
+        onDecrease={() => setAesthetics(prev => ({ ...prev, lineSpacing: Math.max(0, prev.lineSpacing - 5) }))}
+        onIncrease={() => setAesthetics(prev => ({ ...prev, lineSpacing: Math.min(100, prev.lineSpacing + 5) }))}
+      />
+      <ValueStepper 
+        label={t.marginLabel || "Vertical Margin"} 
+        value={aesthetics.verticalMargin} 
+        unit="vh"
+        onDecrease={() => setAesthetics(prev => ({ ...prev, verticalMargin: Math.max(0, prev.verticalMargin - 1) }))}
+        onIncrease={() => setAesthetics(prev => ({ ...prev, verticalMargin: Math.min(30, prev.verticalMargin + 1) }))}
+      />
       
       <MenuCategory label={t.readingSettings || "Reading"} />
       <button onClick={() => toggleTapToSelect()} style={menuItemStyle}>
@@ -226,7 +287,7 @@ function App() {
       <button
         onClick={() => {
           if (bookData.length === 0) { alert(t.noDataLoaded); return; }
-          const profile: UserProfile = { sentences: bookData, activeIndex, metadata, ankiField, stats, bookmarks };
+          const profile: UserProfile = { sentences: bookData, activeIndex, metadata, ankiField, stats, bookmarks, aesthetics };
           const blob = new Blob([JSON.stringify(profile)], { type: "application/json" });
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
@@ -394,7 +455,12 @@ function App() {
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
 
   return (
-    <>
+    <div style={{
+      // @ts-ignore - CSS variables
+      '--reader-font-size': `${aesthetics.fontSize}px`,
+      '--reader-line-spacing': `${aesthetics.lineSpacing}px`,
+      '--reader-vertical-margin': `${aesthetics.verticalMargin}vh`
+    } as any}>
       {currentView === 'reader' ? (
         <>
           <ReaderContainer 
@@ -438,7 +504,7 @@ function App() {
             flexDirection: 'column',
             alignItems: 'flex-start',
             opacity: mobileMenuOpen ? 1 : 0.3,
-            transition: 'opacity 0.3s ease'
+            transition: 'opacity 0.3s ease',
           }}
           onMouseEnter={e => e.currentTarget.style.opacity = '1'}
           onMouseLeave={e => { if (!mobileMenuOpen) e.currentTarget.style.opacity = '0.3'; }}
@@ -576,7 +642,7 @@ function App() {
           t={t}
         />
       )}
-    </>
+    </div>
   );
 }
 const menuItemStyle: React.CSSProperties = {

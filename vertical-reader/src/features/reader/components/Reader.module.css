@@ -21,15 +21,15 @@
 .sentencesWrapper {
   height: 100vh;
   box-sizing: border-box;
-  padding: 10vh 50vw; /* 10vh vertical padding keeps text off edges, 50vw centers first/last elements */
+  padding: var(--reader-vertical-margin, 10vh) 50vw; /* 50vw centers first/last elements */
 }
 
 .sentence {
   display: block;
-  padding: 0 40px;
+  padding: 0 var(--reader-line-spacing, 40px);
   position: relative;
   max-height: 80vh; /* Forces vertical wrapping if text is too long */
-  font-size: 28px;
+  font-size: var(--reader-font-size, 28px);
   line-height: 2;
   opacity: 0.2;
   transition: opacity 0.3s ease, transform 0.3s ease, filter 0.3s ease, color 0.3s ease;
