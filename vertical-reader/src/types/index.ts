@@ -38,9 +38,10 @@ export interface UserStats {
 }
 
 export interface ReaderAesthetics {
-  fontSize: number;      // px
-  lineSpacing: number;   // px (gutter between columns)
-  verticalMargin: number; // vh (padding top/bottom)
+  fontSize: number;       // px
+  verticalMargin: number; // vh (top/bottom safety zone)
+  horizontalMargin: number; // px (gutter between columns)
+  readingWidth: number;   // % of viewport (e.g., 50-100)
 }
 
 export interface UserProfile {

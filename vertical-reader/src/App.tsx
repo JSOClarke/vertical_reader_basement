@@ -132,10 +132,12 @@ function App() {
   const [ankiModalOpen, setAnkiModalOpen] = useState(false);
   const [isJumpModalOpen, setJumpModalOpen] = useState(false);
 
-  const [aesthetics, setAesthetics] = useState<ReaderAesthetics>(saved.current?.aesthetics ?? {
+  const [aesthetics, setAesthetics] = useState<ReaderAesthetics>({
     fontSize: 28,
-    lineSpacing: 40,
-    verticalMargin: 10
+    verticalMargin: 10,
+    horizontalMargin: 40,
+    readingWidth: 100,
+    ...saved.current?.aesthetics
   });
 
   const menuRef = useRef<HTMLDivElement>(null);
@@ -252,18 +254,25 @@ function App() {
         onIncrease={() => setAesthetics(prev => ({ ...prev, fontSize: Math.min(48, prev.fontSize + 2) }))}
       />
       <ValueStepper 
-        label={t.lineSpacingLabel || "Line Spacing"} 
-        value={aesthetics.lineSpacing} 
-        unit="px"
-        onDecrease={() => setAesthetics(prev => ({ ...prev, lineSpacing: Math.max(0, prev.lineSpacing - 5) }))}
-        onIncrease={() => setAesthetics(prev => ({ ...prev, lineSpacing: Math.min(100, prev.lineSpacing + 5) }))}
-      />
-      <ValueStepper 
-        label={t.marginLabel || "Vertical Margin"} 
+        label={t.verticalMarginLabel || "Top/Bottom"} 
         value={aesthetics.verticalMargin} 
         unit="vh"
         onDecrease={() => setAesthetics(prev => ({ ...prev, verticalMargin: Math.max(0, prev.verticalMargin - 1) }))}
         onIncrease={() => setAesthetics(prev => ({ ...prev, verticalMargin: Math.min(30, prev.verticalMargin + 1) }))}
+      />
+      <ValueStepper 
+        label={t.horizontalMarginLabel || "Left/Right"} 
+        value={aesthetics.horizontalMargin} 
+        unit="px"
+        onDecrease={() => setAesthetics(prev => ({ ...prev, horizontalMargin: Math.max(0, prev.horizontalMargin - 5) }))}
+        onIncrease={() => setAesthetics(prev => ({ ...prev, horizontalMargin: Math.min(100, prev.horizontalMargin + 5) }))}
+      />
+      <ValueStepper 
+        label={t.readingWidthLabel || "Viewing Width"} 
+        value={aesthetics.readingWidth} 
+        unit="%"
+        onDecrease={() => setAesthetics(prev => ({ ...prev, readingWidth: Math.max(30, prev.readingWidth - 5) }))}
+        onIncrease={() => setAesthetics(prev => ({ ...prev, readingWidth: Math.min(100, prev.readingWidth + 5) }))}
       />
       
       <MenuCategory label={t.readingSettings || "Reading"} />
@@ -458,8 +467,14 @@ function App() {
     <div style={{
       // @ts-ignore - CSS variables
       '--reader-font-size': `${aesthetics.fontSize}px`,
-      '--reader-line-spacing': `${aesthetics.lineSpacing}px`,
-      '--reader-vertical-margin': `${aesthetics.verticalMargin}vh`
+      '--reader-vertical-margin': `${aesthetics.verticalMargin}vh`,
+      '--reader-horizontal-margin': `${aesthetics.horizontalMargin}px`,
+      maxWidth: `${aesthetics.readingWidth}vw`,
+      margin: '0 auto',
+      height: '100vh',
+      position: 'relative',
+      backgroundColor: 'var(--bg-color)',
+      overflow: 'hidden'
     } as any}>
       {currentView === 'reader' ? (
         <>

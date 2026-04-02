@@ -22,8 +22,9 @@ export const translations = {
     dataActions: 'Data Actions',
     aestheticsSettings: 'Aesthetics',
     fontSizeLabel: 'Font Size',
-    lineSpacingLabel: 'Line Spacing',
-    marginLabel: 'Vertical Margin',
+    verticalMarginLabel: 'Top/Bottom',
+    horizontalMarginLabel: 'Left/Right',
+    readingWidthLabel: 'Viewing Width',
 
     // Action Tooltips
     translateTooltip: 'Translate Active Sentence [T]',
@@ -93,8 +94,9 @@ export const translations = {
     dataActions: 'データ操作',
     aestheticsSettings: '外観設定',
     fontSizeLabel: '文字サイズ',
-    lineSpacingLabel: '行間隔',
-    marginLabel: '上下余白',
+    verticalMarginLabel: '上下余白 (Safe Zone)',
+    horizontalMarginLabel: '左右余白 (Line Spacing)',
+    readingWidthLabel: '表示幅',
 
     // Action Tooltips
     translateTooltip: '現在の文章を翻訳 [T]',
