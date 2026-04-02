@@ -11,6 +11,7 @@ export interface ReaderProps {
   onIndexChange: (index: number | ((prev: number) => number)) => void;
   tapToSelect: boolean;
   showArrows: boolean;
+  centerActive: boolean;
 }
 
 export interface BookMetadata {

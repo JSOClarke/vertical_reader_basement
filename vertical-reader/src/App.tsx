@@ -146,6 +146,17 @@ function App() {
     return next;
   });
 
+  // Center-Active: toggle automatic scrolling to the active sentence
+  const [centerActive, setCenterActive] = useState<boolean>(() => {
+    const stored = localStorage.getItem('centerActive');
+    return stored === null ? true : stored === 'true';
+  });
+  const toggleCenterActive = () => setCenterActive(prev => {
+    const next = !prev;
+    localStorage.setItem('centerActive', String(next));
+    return next;
+  });
+
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('theme') as 'dark'|'light') || 'dark';
   });
@@ -167,6 +178,7 @@ function App() {
             onIndexChange={setActiveIndex} 
             tapToSelect={tapToSelect}
             showArrows={showArrows}
+            centerActive={centerActive}
           />
           
           <BottomHUD 
@@ -236,6 +248,9 @@ function App() {
               </button>
               <button onClick={() => { toggleArrows(); }} style={menuItemStyle}>
                 {showArrows ? `● ${t.showArrows}` : `○ ${t.showArrows}`}
+              </button>
+              <button onClick={() => { toggleCenterActive(); }} style={menuItemStyle}>
+                {centerActive ? `● ${t.centerActive}` : `○ ${t.centerActive}`}
               </button>
               <button onClick={() => { setCurrentView('stats'); setMobileMenuOpen(false); }} style={menuItemStyle}>
                 {t.viewStats}

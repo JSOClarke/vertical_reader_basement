@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { Sentence } from './Sentence';
+import { NavArrows } from './NavArrows';
 import { useSwipe } from '../../../hooks/useSwipe';
 import styles from './Reader.module.css';
 import type { ReaderProps } from '../../../types';
@@ -8,12 +9,13 @@ interface ReaderViewProps extends ReaderProps {
   assignRef: (index: number) => (el: HTMLDivElement | null) => void;
 }
 
-export const ReaderView: React.FC<ReaderViewProps> = ({
+export const ReaderView: React.FC<ReaderViewProps> = React.memo(({
   sentences,
   activeIndex,
   onIndexChange,
   tapToSelect,
   showArrows,
+  centerActive,
   assignRef
 }) => {
   const goNext = useCallback(() => {
@@ -29,7 +31,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
 
   return (
     <div
-      className={styles.readerContainer}
+      className={`${styles.readerContainer} ${!centerActive ? styles.noCentering : ''}`}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
@@ -45,6 +47,16 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
           />
         ))}
       </div>
+
+      {showArrows && (
+        <NavArrows
+          activeIndex={activeIndex}
+          totalSentences={sentences.length}
+          onIndexChange={onIndexChange}
+        />
+      )}
     </div>
   );
-};
+});
+
+

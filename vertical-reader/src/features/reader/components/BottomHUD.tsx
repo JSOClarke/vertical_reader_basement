@@ -14,7 +14,7 @@ interface BottomHUDProps {
   t: any;
 }
 
-export const BottomHUD: React.FC<BottomHUDProps> = ({ 
+export const BottomHUD: React.FC<BottomHUDProps> = React.memo(({ 
   metadata, 
   sentences, 
   activeIndex, 
@@ -73,4 +73,5 @@ export const BottomHUD: React.FC<BottomHUDProps> = ({
       </div>
     </>
   );
-};
+});
+

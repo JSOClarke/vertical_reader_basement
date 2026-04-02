@@ -13,6 +13,7 @@ export const translations = {
     loadEpub: 'Load EPUB',
     ankiSettings: 'Anki Settings',
     languageLabel: '🌐 Language: EN',
+    centerActive: 'Center Active',
 
     // Stats View
     statsTitle: 'Reading Statistics',
@@ -63,6 +64,7 @@ export const translations = {
     loadEpub: 'EPUBを開く',
     ankiSettings: 'Anki設定',
     languageLabel: '🌐 言語: 日本語',
+    centerActive: '文章を中央に表示',
 
     // Stats View
     statsTitle: '読書統計',
