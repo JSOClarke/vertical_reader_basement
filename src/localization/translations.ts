@@ -72,6 +72,9 @@ export const translations = {
     setAnkiFieldToast: 'Set Anki field in menu first',
     ankiSuccessToast: 'Anki card updated successfully!',
     ankiFailToast: 'Anki update failed',
+    cloudPushSuccess: 'Cloud data updated successfully!',
+    cloudPullSuccess: 'Cloud data loaded into local reader!',
+    cloudSyncError: 'Cloud synchronization failed.',
 
     // Reset
     resetReader: 'Reset All Data',
@@ -148,6 +151,9 @@ export const translations = {
     setAnkiFieldToast: '先にメニューから対象フィールドを設定してください',
     ankiSuccessToast: 'Ankiカードが正常に更新されました！',
     ankiFailToast: 'Ankiの更新に失敗しました',
+    cloudPushSuccess: 'クラウドデータが正常に更新されました！',
+    cloudPullSuccess: 'クラウドデータを読み込みました！',
+    cloudSyncError: 'クラウド同期に失敗しました。',
 
     // Reset
     resetReader: 'データを全削除',

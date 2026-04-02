@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useGoogleDrive } from './hooks/useGoogleDrive';
 import { ReaderContainer } from './features/reader/components/ReaderContainer';
@@ -141,6 +141,12 @@ function App() {
     readingWidth: 100,
     ...saved.current?.aesthetics
   });
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  }, []);
 
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -307,6 +313,7 @@ function App() {
           link.click();
           URL.revokeObjectURL(url);
           setMobileMenuOpen(false);
+          showToast(t.copiedToast, 'success'); // Reusing "copied" for simple export success
         }}
         style={menuItemStyle}
       >
@@ -326,11 +333,12 @@ function App() {
                 setBookData(json.sentences);
                 setActiveIndex(json.activeIndex);
                 setMetadata(json.metadata);
-                if (json.ankiField) setAnkiField(json.ankiField);
-                if (json.stats) setStats(json.stats);
+                if (json.bookmarks) setBookmarks(json.bookmarks);
+                if (json.aesthetics) setAesthetics(json.aesthetics);
                 setError(null);
-              } else { alert(t.invalidProfile); }
-            } catch { alert(t.failedParseProfile); }
+                showToast(t.cloudPullSuccess, 'success'); // Reusing pull success for import
+              } else { showToast(t.invalidProfile, 'error'); }
+            } catch { showToast(t.failedParseProfile, 'error'); }
           };
           reader.readAsText(file);
           e.target.value = '';
@@ -443,7 +451,9 @@ function App() {
     };
     const success = await push(profile);
     if (success) {
-      // success toast handled by UI status
+      showToast(t.cloudPushSuccess, 'success');
+    } else {
+      showToast(t.cloudSyncError, 'error');
     }
   };
 
@@ -458,7 +468,10 @@ function App() {
         if (cloudData.stats) setStats(cloudData.stats);
         if (cloudData.bookmarks) setBookmarks(cloudData.bookmarks);
         if (cloudData.aesthetics) setAesthetics(cloudData.aesthetics);
+        showToast(t.cloudPullSuccess, 'success');
       }
+    } else {
+      showToast(t.cloudSyncError, 'error');
     }
   };
 
@@ -711,6 +724,40 @@ function App() {
           onClose={() => setJumpModalOpen(false)}
           t={t}
         />
+      )}
+
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          top: '30px',
+          right: '30px',
+          padding: '16px 24px',
+          background: 'var(--btn-bg)',
+          color: 'var(--btn-text)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          borderRadius: '0',
+          borderLeft: `4px solid ${toast.type === 'success' ? '#10b981' : '#ef4444'}`,
+          fontSize: '13px',
+          fontWeight: '600',
+          zIndex: 9999,
+          animation: 'fadeSlideDown 0.4s ease-out forwards',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          maxWidth: '80vw'
+        }}>
+          {toast.type === 'success' ? (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          )}
+          {toast.message}
+        </div>
       )}
     </div>
   );
