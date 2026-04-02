@@ -4,6 +4,7 @@ import type { UserProfile } from '../types';
 const CLIENT_ID = '338920617728-d6h3n4brsi6bpln1gfep002su80gqkar.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const FILE_NAME = 'tateyomi-profile.json';
+const STORAGE_KEY_CONNECTED = 'tateyomi-gdrive-connected';
 
 interface GoogleDriveHook {
   isConnected: boolean;
@@ -36,10 +37,14 @@ export function useGoogleDrive(): GoogleDriveHook {
         scope: SCOPES,
         callback: (resp: any) => {
           if (resp.error) {
-            setError(resp.error);
+            // Ignore silent refresh common errors to avoid redundant UI alerts
+            if (resp.error !== 'id_token_ext_not_received' && resp.error !== 'interaction_required') {
+              setError(resp.error);
+            }
             return;
           }
           setAccessToken(resp.access_token);
+          localStorage.setItem(STORAGE_KEY_CONNECTED, 'true');
         },
       });
       setTokenClient(client);
@@ -50,6 +55,14 @@ export function useGoogleDrive(): GoogleDriveHook {
       document.body.removeChild(script);
     };
   }, []);
+
+  // Handle Silent Auto-Connect
+  useEffect(() => {
+    if (tokenClient && localStorage.getItem(STORAGE_KEY_CONNECTED) === 'true') {
+      // Silent refresh: no popup, works if already logged into Google in browser
+      tokenClient.requestAccessToken({ prompt: 'none' });
+    }
+  }, [tokenClient]);
 
   const connect = useCallback(() => {
     if (tokenClient) {
