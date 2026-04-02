@@ -7,7 +7,7 @@
   --btn-text: #121212;
   --btn-shadow: 0 4px 10px rgba(0,0,0,0.4);
 
-  font-family: 'Noto Serif JP', 'Hiragino Mincho Pro', 'MS PMincho', serif; /* good Japanese fonts */
+  font-family: 'Inter', 'system-ui', -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 

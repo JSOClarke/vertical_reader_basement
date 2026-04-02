@@ -29,6 +29,7 @@
   padding: 0 var(--reader-horizontal-margin, 40px);
   position: relative;
   max-height: 80vh; /* Forces vertical wrapping if text is too long */
+  font-family: 'Noto Serif JP', 'Hiragino Mincho Pro', 'MS PMincho', serif;
   font-size: var(--reader-font-size, 28px);
   line-height: 2;
   opacity: 0.2;

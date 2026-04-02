@@ -7,7 +7,8 @@ const FILE_NAME = 'tateyomi-profile.json';
 
 interface GoogleDriveHook {
   isConnected: boolean;
-  isSyncing: boolean;
+  isPushing: boolean;
+  isPulling: boolean;
   lastSynced: string | null;
   error: string | null;
   connect: () => void;
@@ -18,7 +19,8 @@ interface GoogleDriveHook {
 export function useGoogleDrive(): GoogleDriveHook {
   const [tokenClient, setTokenClient] = useState<any>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [isPushing, setIsPushing] = useState(false);
+  const [isPulling, setIsPulling] = useState(false);
   const [lastSynced, setLastSynced] = useState<string | null>(localStorage.getItem('lastCloudSync'));
   const [error, setError] = useState<string | null>(null);
 
@@ -68,7 +70,7 @@ export function useGoogleDrive(): GoogleDriveHook {
 
   const push = useCallback(async (data: UserProfile): Promise<boolean> => {
     if (!accessToken) return false;
-    setIsSyncing(true);
+    setIsPushing(true);
     setError(null);
 
     try {
@@ -109,13 +111,13 @@ export function useGoogleDrive(): GoogleDriveHook {
       setError(String(err));
       return false;
     } finally {
-      setIsSyncing(false);
+      setIsPushing(false);
     }
   }, [accessToken]);
 
   const pull = useCallback(async (): Promise<UserProfile | null> => {
     if (!accessToken) return null;
-    setIsSyncing(true);
+    setIsPulling(true);
     setError(null);
 
     try {
@@ -135,13 +137,14 @@ export function useGoogleDrive(): GoogleDriveHook {
       setError(String(err));
       return null;
     } finally {
-      setIsSyncing(false);
+      setIsPulling(false);
     }
   }, [accessToken]);
 
   return {
     isConnected: !!accessToken,
-    isSyncing,
+    isPushing,
+    isPulling,
     lastSynced,
     error,
     connect,

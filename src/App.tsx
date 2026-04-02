@@ -47,6 +47,7 @@ const MenuCategory = ({ label }: { label: string }) => (
   <div style={{
     padding: '12px 20px 6px',
     fontSize: '10px',
+    fontFamily: "'Inter', 'system-ui', sans-serif",
     fontWeight: '700',
     letterSpacing: '0.1em',
     color: 'rgba(128,128,128,0.6)',
@@ -71,6 +72,7 @@ const ValueStepper = ({ label, value, unit = '', onDecrease, onIncrease }: {
     justifyContent: 'space-between', 
     padding: '10px 20px',
     fontSize: '13px',
+    fontFamily: "'Inter', 'system-ui', sans-serif",
     color: 'var(--btn-text)'
   }}>
     <span style={{ opacity: 0.8 }}>{label}</span>
@@ -105,7 +107,7 @@ function loadSavedProfile(): UserProfile | null {
 
 function App() {
   const saved = useRef(loadSavedProfile());
-  const { isConnected, isSyncing, lastSynced, connect, push, pull } = useGoogleDrive();
+  const { isConnected, isPushing, isPulling, lastSynced, connect, push, pull } = useGoogleDrive();
 
   const [bookData, setBookData] = useState<string[]>(saved.current?.sentences ?? SAMPLE_DATA);
   const [activeIndex, setActiveIndex] = useState<number>(saved.current?.activeIndex ?? 0);
@@ -370,28 +372,6 @@ function App() {
         }} style={{ display: 'none' }} />
       </label>
 
-      <MenuCategory label={t.cloudTitle || "Cloud Sync"} />
-      {!isConnected ? (
-        <button onClick={() => connect()} style={menuItemStyle}>
-          {t.connectDrive}
-        </button>
-      ) : (
-        <>
-          <button onClick={() => handleCloudPush()} style={menuItemStyle} disabled={isSyncing}>
-            {t.pushTitle}
-            {isSyncing && <span style={{ marginLeft: 'auto', fontSize: '10px', opacity: 0.5 }}>...</span>}
-          </button>
-          <button onClick={() => handleCloudPull()} style={menuItemStyle} disabled={isSyncing}>
-            {t.pullTitle}
-          </button>
-          {lastSynced && (
-            <div style={{ padding: '4px 24px 10px', fontSize: '10px', opacity: 0.4 }}>
-              Last Sync: {lastSynced}
-            </div>
-          )}
-        </>
-      )}
-
       <MenuCategory label="Integrations" />
       <button
         onClick={() => { setAnkiModalOpen(true); setMobileMenuOpen(false); }}
@@ -640,6 +620,69 @@ function App() {
           )}
         </div>
       )}
+      
+      {/* Cloud Sync Desktop HUD */}
+      {!isMobile && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: '30px',
+            right: '30px',
+            zIndex: 2000,
+            display: 'flex',
+            gap: '10px',
+            alignItems: 'center'
+          }}
+        >
+          {!isConnected ? (
+            <button 
+              onClick={() => connect()} 
+              style={{ ...hudButtonStyle, background: 'var(--btn-bg)', color: 'var(--btn-text)' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
+                <path d="M17.5 19c.6 0 1.1-.4 1.3-.9.4-1 .3-2.1-.3-3-.6-.9-1.5-1.5-2.5-1.5-.1 0-.3 0-.4.1-.4-2-2.1-3.6-4.1-3.6-1.5 0-2.8.9-3.5 2.1-.3-.1-.6-.1-.9-.1-1.6 0-2.9 1.3-2.9 2.9 0 .2 0 .4.1.5-1.1.4-1.9 1.5-1.9 2.8 0 1.5 1.1 2.7 2.6 2.7h12.5z" />
+              </svg>
+              {t.connectDrive || "Connect Drive"}
+            </button>
+          ) : (
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button 
+                onClick={() => handleCloudPush()} 
+                disabled={isPushing || isPulling}
+                style={{ 
+                  ...hudButtonStyle, 
+                  opacity: isPushing || isPulling ? 0.6 : 0.3,
+                  transition: 'opacity 0.3s ease'
+                }}
+                onMouseEnter={e => { if (!isPushing && !isPulling) e.currentTarget.style.opacity = '1'; }}
+                onMouseLeave={e => { if (!isPushing && !isPulling) e.currentTarget.style.opacity = '0.3'; }}
+                title={t.pushTitle}
+              >
+                {isPushing ? '↑ Saving...' : '↑ Save'}
+              </button>
+              <button 
+                onClick={() => handleCloudPull()} 
+                disabled={isPushing || isPulling}
+                style={{ 
+                  ...hudButtonStyle, 
+                  opacity: isPushing || isPulling ? 0.6 : 0.3,
+                  transition: 'opacity 0.3s ease'
+                }}
+                onMouseEnter={e => { if (!isPushing && !isPulling) e.currentTarget.style.opacity = '1'; }}
+                onMouseLeave={e => { if (!isPushing && !isPulling) e.currentTarget.style.opacity = '0.3'; }}
+                title={t.pullTitle}
+              >
+                {isPulling ? '↓ Loading...' : '↓ Load'}
+              </button>
+              {lastSynced && (
+                <div style={{ padding: '0 10px', fontSize: '9px', opacity: 0.3, maxWidth: '60px', lineHeight: '1.1' }}>
+                  Sync: {lastSynced.split(',')[1]}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {isMobile && (
         <div 
@@ -729,11 +772,12 @@ function App() {
       {toast && (
         <div style={{
           position: 'fixed',
-          top: '30px',
+          top: '85px',
           right: '30px',
           padding: '16px 24px',
           background: 'var(--btn-bg)',
           color: 'var(--btn-text)',
+          fontFamily: "'Inter', 'system-ui', sans-serif",
           boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
           borderRadius: '0',
           borderLeft: `4px solid ${toast.type === 'success' ? '#10b981' : '#ef4444'}`,
@@ -769,7 +813,7 @@ const menuItemStyle: React.CSSProperties = {
   border: 'none',
   borderBottom: '1px solid rgba(128,128,128,0.08)',
   fontSize: '13px',
-  fontFamily: 'Inter, system-ui, sans-serif',
+  fontFamily: "'Inter', 'system-ui', sans-serif",
   fontWeight: '500',
   textAlign: 'left',
   cursor: 'pointer',
@@ -778,6 +822,22 @@ const menuItemStyle: React.CSSProperties = {
   alignItems: 'center',
   width: '100%',
   gap: '12px'
+};
+
+const hudButtonStyle: React.CSSProperties = {
+  background: 'var(--btn-bg)',
+  color: 'var(--btn-text)',
+  padding: '10px 16px',
+  border: 'none',
+  fontSize: '12px',
+  fontFamily: "'Inter', 'system-ui', sans-serif",
+  fontWeight: '600',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  boxShadow: 'var(--btn-shadow)',
+  transition: 'opacity 0.2s',
+  borderRadius: '0'
 };
 
 export default App;
