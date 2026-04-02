@@ -3,9 +3,10 @@ import React, { useState, useMemo } from 'react';
 interface ProgressBarProps {
   sentences: string[];
   activeIndex: number;
+  onOpenJump: () => void;
 }
 
-export const ProgressBar: React.FC<ProgressBarProps> = ({ sentences, activeIndex }) => {
+export const ProgressBar: React.FC<ProgressBarProps> = ({ sentences, activeIndex, onOpenJump }) => {
   const [mode, setMode] = useState<'sentences' | 'characters'>('sentences');
 
   const totalSentences = sentences.length;
@@ -39,8 +40,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ sentences, activeIndex
 
   return (
     <div 
-      onClick={() => setMode(m => m === 'sentences' ? 'characters' : 'sentences')}
-      title={`Click to switch right to ${mode === 'sentences' ? 'characters' : 'sentences'}`}
+      onClick={onOpenJump}
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -51,9 +51,9 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ sentences, activeIndex
       <div 
         style={{
           width: '150px',
-          height: '4px',
+          height: '6px',
           background: 'rgba(128, 128, 128, 0.3)',
-          borderRadius: '2px',
+          borderRadius: '3px',
           overflow: 'hidden'
         }}
       >
@@ -67,14 +67,21 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ sentences, activeIndex
           }}
         />
       </div>
-      <span style={{ 
-        color: 'var(--text-color)', 
-        fontSize: '12px', 
-        fontFamily: 'monospace',
-        fontWeight: 'bold',
-        userSelect: 'none',
-        whiteSpace: 'nowrap'
-      }}>
+      <span 
+        onClick={(e) => {
+          e.stopPropagation();
+          setMode(m => m === 'sentences' ? 'characters' : 'sentences');
+        }}
+        title={`Click to switch right to ${mode === 'sentences' ? 'characters' : 'sentences'}`}
+        style={{ 
+          color: 'var(--text-color)', 
+          fontSize: '12px', 
+          fontFamily: 'monospace',
+          fontWeight: 'bold',
+          userSelect: 'none',
+          whiteSpace: 'nowrap'
+        }}
+      >
         {displayLabel}
       </span>
     </div>

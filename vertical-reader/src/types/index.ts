@@ -12,6 +12,7 @@ export interface ReaderProps {
   tapToSelect: boolean;
   showArrows: boolean;
   centerActive: boolean;
+  onOpenJump: () => void;
 }
 
 export interface BookMetadata {

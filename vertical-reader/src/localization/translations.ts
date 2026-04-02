@@ -14,6 +14,9 @@ export const translations = {
     ankiSettings: 'Anki Settings',
     languageLabel: '🌐 Language: EN',
     centerActive: 'Center Active',
+    jumpToTitle: 'Jump to Position',
+    jumpToSentence: 'Sentence #',
+    go: 'Go',
 
     // Stats View
     statsTitle: 'Reading Statistics',
@@ -51,6 +54,10 @@ export const translations = {
     setAnkiFieldToast: 'Set Anki field in ☰ menu first',
     ankiSuccessToast: 'Anki card updated successfully!',
     ankiFailToast: 'Anki update failed',
+
+    // Reset
+    resetReader: 'Reset Reader',
+    confirmReset: 'Are you sure you want to delete ALL data (books, stats, and settings)? This cannot be undone.',
   },
   ja: {
     // Menu
@@ -65,6 +72,9 @@ export const translations = {
     ankiSettings: 'Anki設定',
     languageLabel: '🌐 言語: 日本語',
     centerActive: '文章を中央に表示',
+    jumpToTitle: 'ページ移動',
+    jumpToSentence: '文番号',
+    go: '移動',
 
     // Stats View
     statsTitle: '読書統計',
@@ -102,5 +112,9 @@ export const translations = {
     setAnkiFieldToast: '先に ☰ メニューから対象フィールドを設定してください',
     ankiSuccessToast: 'Ankiカードが正常に更新されました！',
     ankiFailToast: 'Ankiの更新に失敗しました',
+
+    // Reset
+    resetReader: 'データを全削除',
+    confirmReset: 'すべてのデータ（本、統計、設定）を削除してもよろしいですか？この操作は取り消せません。',
   }
 };

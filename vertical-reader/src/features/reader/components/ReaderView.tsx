@@ -16,6 +16,7 @@ export const ReaderView: React.FC<ReaderViewProps> = React.memo(({
   tapToSelect,
   showArrows,
   centerActive,
+  onOpenJump,
   assignRef
 }) => {
   const goNext = useCallback(() => {

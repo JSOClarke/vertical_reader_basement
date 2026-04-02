@@ -11,6 +11,7 @@ interface BottomHUDProps {
   isMobile?: boolean;
   ankiField?: string;
   onAnkiMine: (sentence: string) => void;
+  onOpenJump: () => void;
   t: any;
 }
 
@@ -21,6 +22,7 @@ export const BottomHUD: React.FC<BottomHUDProps> = React.memo(({
   isMobile = false, 
   ankiField = '',
   onAnkiMine,
+  onOpenJump,
   t
 }) => {
   const activeSentence = sentences[activeIndex] || '';
@@ -35,7 +37,7 @@ export const BottomHUD: React.FC<BottomHUDProps> = React.memo(({
           left: '15px',
           zIndex: 1000,
         }}>
-          <ProgressBar sentences={sentences} activeIndex={activeIndex} />
+          <ProgressBar sentences={sentences} activeIndex={activeIndex} onOpenJump={onOpenJump} />
         </div>
       )}
 
@@ -59,7 +61,7 @@ export const BottomHUD: React.FC<BottomHUDProps> = React.memo(({
           gap: '20px'
         }}>
           <BookInfo metadata={metadata} />
-          {!isMobile && <ProgressBar sentences={sentences} activeIndex={activeIndex} />}
+          {!isMobile && <ProgressBar sentences={sentences} activeIndex={activeIndex} onOpenJump={onOpenJump} />}
         </div>
 
         <TranslationPanel 

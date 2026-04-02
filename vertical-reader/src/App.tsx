@@ -3,6 +3,7 @@ import { useMediaQuery } from './hooks/useMediaQuery';
 import { ReaderContainer } from './features/reader/components/ReaderContainer';
 import { BottomHUD } from './features/reader/components/BottomHUD';
 import { AnkiSettingsModal } from './features/anki/components/AnkiSettingsModal';
+import { JumpToModal } from './features/reader/components/JumpToModal';
 import { StatsView } from './features/stats/components/StatsView';
 import { SAMPLE_DATA } from './data/mockBook';
 import { translations } from './localization/translations';
@@ -50,6 +51,7 @@ function App() {
   // Anki
   const [ankiField, setAnkiField] = useState(saved.current?.ankiField ?? '');
   const [ankiModalOpen, setAnkiModalOpen] = useState(false);
+  const [isJumpModalOpen, setJumpModalOpen] = useState(false);
 
   // Language
   const [language, setLanguage] = useState<Language>(() => {
@@ -124,6 +126,11 @@ function App() {
     }));
   };
 
+  const handleJumpToIndex = (index: number) => {
+    setActiveIndex(index);
+    setJumpModalOpen(false);
+  };
+
   // Tap-to-select: when off, clicking a sentence won't change the active index
   const [tapToSelect, setTapToSelect] = useState<boolean>(() => {
     const stored = localStorage.getItem('tapToSelect');
@@ -179,6 +186,7 @@ function App() {
             tapToSelect={tapToSelect}
             showArrows={showArrows}
             centerActive={centerActive}
+            onOpenJump={() => setJumpModalOpen(true)}
           />
           
           <BottomHUD 
@@ -188,6 +196,7 @@ function App() {
             isMobile={isMobile}
             ankiField={ankiField}
             onAnkiMine={handleAnkiMine}
+            onOpenJump={() => setJumpModalOpen(true)}
             t={t}
           />
         </>
@@ -199,11 +208,11 @@ function App() {
         <div style={{
           position: 'fixed',
           top: '30px',
-          right: '30px',
+          left: '30px',
           zIndex: 2000,
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'flex-end',
+          alignItems: 'flex-start',
           opacity: mobileMenuOpen ? 1 : 0.3,
           transition: 'opacity 0.3s ease'
         }}
@@ -324,6 +333,17 @@ function App() {
                 style={menuItemStyle}
               >
                 {t.ankiSettings}
+              </button>
+              <button 
+                onClick={() => {
+                  if (window.confirm(t.confirmReset)) {
+                    localStorage.clear();
+                    window.location.reload();
+                  }
+                }} 
+                style={{ ...menuItemStyle, color: '#ff4444', borderTop: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                ⚠ {t.resetReader}
               </button>
             </div>
           )}
@@ -490,10 +510,19 @@ function App() {
           {error}
         </div>
       )}
+
+      {isJumpModalOpen && (
+        <JumpToModal
+          currentIndex={activeIndex}
+          totalSentences={bookData.length}
+          onJump={handleJumpToIndex}
+          onClose={() => setJumpModalOpen(false)}
+          t={t}
+        />
+      )}
     </>
   );
 }
-
 const menuItemStyle: React.CSSProperties = {
   background: 'transparent',
   color: 'var(--btn-text)',
