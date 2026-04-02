@@ -4,6 +4,8 @@ import { ProgressBar } from './ProgressBar';
 import { TranslationPanel } from './TranslationPanel';
 import type { BookMetadata } from '../../../types';
 
+import type { ReaderActions } from '../hooks/useReaderActions';
+
 interface BottomHUDProps {
   metadata?: BookMetadata;
   sentences: string[];
@@ -12,6 +14,7 @@ interface BottomHUDProps {
   ankiField?: string;
   onAnkiMine: (sentence: string) => void;
   onOpenJump: () => void;
+  readerActions: ReaderActions;
   t: any;
 }
 
@@ -23,6 +26,7 @@ export const BottomHUD: React.FC<BottomHUDProps> = React.memo(({
   ankiField = '',
   onAnkiMine,
   onOpenJump,
+  readerActions,
   t
 }) => {
   const activeSentence = sentences[activeIndex] || '';
@@ -70,6 +74,7 @@ export const BottomHUD: React.FC<BottomHUDProps> = React.memo(({
           metadata={metadata} 
           ankiField={ankiField}
           onAnkiMine={onAnkiMine}
+          readerActions={readerActions}
           t={t}
         />
       </div>

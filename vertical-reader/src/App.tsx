@@ -5,6 +5,8 @@ import { BottomHUD } from './features/reader/components/BottomHUD';
 import { AnkiSettingsModal } from './features/anki/components/AnkiSettingsModal';
 import { JumpToModal } from './features/reader/components/JumpToModal';
 import { StatsView } from './features/stats/components/StatsView';
+import { useReaderActions } from './features/reader/hooks/useReaderActions';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { SAMPLE_DATA } from './data/mockBook';
 import { translations } from './localization/translations';
 import type { Language } from './localization/translations';
@@ -34,6 +36,8 @@ function App() {
   const [activeIndex, setActiveIndex] = useState<number>(saved.current?.activeIndex ?? 0);
   const [metadata, setMetadata] = useState<BookMetadata | undefined>(saved.current?.metadata);
   const [error, setError] = useState<string | null>(null);
+
+  const readerActions = useReaderActions();
 
   // Stats
   const [stats, setStats] = useState<UserStats>({
@@ -110,7 +114,8 @@ function App() {
     }
     
     prevIndexRef.current = activeIndex;
-  }, [activeIndex, bookData]);
+    readerActions.clearTranslation();
+  }, [activeIndex, bookData, readerActions.clearTranslation]);
 
   const handleAnkiMine = (sentence: string) => {
     setStats(prev => ({
@@ -125,6 +130,12 @@ function App() {
       ].slice(0, 100), // Cap at 100 for minimalist performance
     }));
   };
+
+  useKeyboardShortcuts({
+    'T': () => readerActions.translate(bookData[activeIndex]),
+    'C': () => readerActions.copy(bookData[activeIndex], t),
+    'A': () => readerActions.mineAnki(bookData[activeIndex], metadata, ankiField, handleAnkiMine, t),
+  });
 
   const handleJumpToIndex = (index: number) => {
     setActiveIndex(index);
@@ -197,6 +208,7 @@ function App() {
             ankiField={ankiField}
             onAnkiMine={handleAnkiMine}
             onOpenJump={() => setJumpModalOpen(true)}
+            readerActions={readerActions}
             t={t}
           />
         </>

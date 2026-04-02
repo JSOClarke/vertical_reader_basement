@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { updateLastCard } from '../../anki/utils/ankiConnect';
+import React from 'react';
 import type { BookMetadata } from '../../../types';
+import type { ReaderActions } from '../hooks/useReaderActions';
 
 const TranslateIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -28,85 +28,35 @@ const AnkiIcon = () => (
   </svg>
 );
 
+
 interface TranslationPanelProps {
   activeSentence: string;
   isMobile?: boolean;
   metadata?: BookMetadata;
   ankiField?: string;
   onAnkiMine: (sentence: string) => void;
+  readerActions: ReaderActions;
   t: any;
 }
 
-export const TranslationPanel: React.FC<TranslationPanelProps> = ({ activeSentence, isMobile = false, metadata, ankiField = '', onAnkiMine, t }) => {
-  const [translation, setTranslation] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [ankiLoading, setAnkiLoading] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-
-  // Auto-clear translation output when the active sentence turns to a new one
-  useEffect(() => {
-    setTranslation(null);
-  }, [activeSentence]);
-
-  const handleCopy = async () => {
-    if (!activeSentence || !activeSentence.trim()) return;
-    try {
-      await navigator.clipboard.writeText(activeSentence);
-      setToast({ message: t.copiedToast, type: 'success' });
-    } catch (err) {
-      setToast({ message: t.copyFailToast, type: 'error' });
-    }
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const handleAnki = async () => {
-    if (!ankiField || !ankiField.trim()) {
-      setToast({ message: t.setAnkiFieldToast, type: 'error' });
-      setTimeout(() => setToast(null), 3000);
-      return;
-    }
-    setAnkiLoading(true);
-    try {
-      await updateLastCard(metadata, ankiField);
-      setToast({ message: t.ankiSuccessToast, type: 'success' });
-      onAnkiMine(activeSentence);
-    } catch (err: any) {
-      setToast({ message: t.ankiFailToast, type: 'error' });
-    } finally {
-      setAnkiLoading(false);
-      setTimeout(() => setToast(null), 3000);
-    }
-  };
-
-  const handleTranslate = async () => {
-    if (!activeSentence || !activeSentence.trim()) return;
-    setLoading(true);
-    try {
-      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl=en&dt=t&q=${encodeURIComponent(activeSentence)}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data && data[0]) {
-        // Map deeply nested Google API array blocks to construct the complete string
-        const translatedText = data[0].map((item: any) => item[0]).join('');
-        setTranslation(translatedText);
-      } else {
-        setTranslation('Translation failed.');
-      }
-    } catch (err) {
-      console.error(err);
-      setTranslation('Network error during translation.');
-    } finally {
-      setLoading(false);
-    }
-  };
+export const TranslationPanel: React.FC<TranslationPanelProps> = ({ 
+  activeSentence, 
+  isMobile = false, 
+  metadata, 
+  ankiField = '', 
+  onAnkiMine,
+  readerActions,
+  t 
+}) => {
+  const { translation, loading, ankiLoading, toast, translate, copy, mineAnki } = readerActions;
 
   return (
     <>
       <div style={{ display: 'flex', flexDirection: 'row', gap: '20px', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button 
-            onClick={handleTranslate}
-            title="Translate Active Sentence"
+            onClick={() => translate(activeSentence)}
+            title="Translate Active Sentence [T]"
             style={{
               background: 'var(--btn-bg)',
               color: 'var(--btn-text)',
@@ -135,8 +85,8 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({ activeSenten
           </button>
   
           <button 
-            onClick={handleCopy}
-            title="Copy Active Sentence"
+            onClick={() => copy(activeSentence, t)}
+            title="Copy Active Sentence [C]"
             style={{
               background: 'var(--btn-bg)',
               color: 'var(--btn-text)',
@@ -159,8 +109,8 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({ activeSenten
 
           {!isMobile && (
             <button 
-              onClick={handleAnki}
-              title="Update Latest Anki Card"
+              onClick={() => mineAnki(activeSentence, metadata, ankiField, onAnkiMine, t)}
+              title="Update Latest Anki Card [A]"
               style={{
                 background: 'var(--btn-bg)',
                 color: 'var(--btn-text)',

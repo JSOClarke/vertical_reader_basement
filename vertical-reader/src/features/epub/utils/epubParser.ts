@@ -119,13 +119,40 @@ export async function parseEpub(file: File): Promise<EpubData> {
     const trimmed = line.trim();
     if (!trimmed) continue;
     
-    // Aggressively split against "。" (and similar basic Japanese boundaries) 
-    // to strictly enforce exactly one sentence per line, ignoring quotes.
-    const parts = trimmed
-      .replace(/([。！？]+)/g, '$1|∆|')
-      .split('|∆|');
-    for (const p of parts) {
-      const s = p.trim();
+    // Structure-aware smart split:
+    // Tracks nesting (quotes, brackets) to ignore periods inside dialogue blocks.
+    const parts: string[] = [];
+    let currentPart = "";
+    let nesting = 0;
+
+    for (let i = 0; i < trimmed.length; i++) {
+      const char = trimmed[i];
+      currentPart += char;
+
+      if ("「『（([【".includes(char)) {
+        nesting++;
+      } else if ("」』）)]】".includes(char)) {
+        nesting = Math.max(0, nesting - 1);
+      }
+
+      // Split at "。！？" if NOT inside a dialogue/bracket block.
+      // Also handles punctuation groups (e.g. "！？") as one unit.
+      if (nesting === 0 && /[。！？]/.test(char)) {
+        while (i + 1 < trimmed.length && /[。！？]/.test(trimmed[i + 1])) {
+          currentPart += trimmed[++i];
+        }
+        parts.push(currentPart.trim());
+        currentPart = "";
+      }
+      // Also split between closing and opening quotes (e.g., 」 「)
+      else if (i + 1 < trimmed.length && "」』".includes(char) && "「『".includes(trimmed[i + 1])) {
+        parts.push(currentPart.trim());
+        currentPart = "";
+      }
+    }
+    if (currentPart.trim()) parts.push(currentPart.trim());
+
+    for (const s of parts) {
       if (s) sentences.push(s);
     }
   }
