@@ -20,4 +20,5 @@ export interface UserProfile {
   sentences: string[];
   activeIndex: number;
   metadata?: BookMetadata;
+  ankiField?: string;
 }

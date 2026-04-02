@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { updateLastCard } from '../../anki/utils/ankiConnect';
+import type { BookMetadata } from '../../../types';
 
 const TranslateIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -18,15 +20,26 @@ const CopyIcon = () => (
   </svg>
 );
 
+const AnkiIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 4h16v16H4z" />
+    <path d="M12 8v8" />
+    <path d="M8 12h8" />
+  </svg>
+);
+
 interface TranslationPanelProps {
   activeSentence: string;
-  isMobile?: boolean; // NEW UI HOOK
+  isMobile?: boolean;
+  metadata?: BookMetadata;
+  ankiField?: string;
 }
 
-export const TranslationPanel: React.FC<TranslationPanelProps> = ({ activeSentence, isMobile = false }) => {
+export const TranslationPanel: React.FC<TranslationPanelProps> = ({ activeSentence, isMobile = false, metadata, ankiField = '' }) => {
   const [translation, setTranslation] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [ankiLoading, setAnkiLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Auto-clear translation output when the active sentence turns to a new one
   useEffect(() => {
@@ -37,11 +50,29 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({ activeSenten
     if (!activeSentence || !activeSentence.trim()) return;
     try {
       await navigator.clipboard.writeText(activeSentence);
-      setToast('Copied to clipboard!');
+      setToast({ message: 'Copied to clipboard!', type: 'success' });
     } catch (err) {
-      setToast('Failed to copy');
+      setToast({ message: 'Failed to copy', type: 'error' });
     }
     setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleAnki = async () => {
+    if (!ankiField || !ankiField.trim()) {
+      setToast({ message: 'Set Anki field in ☰ menu first', type: 'error' });
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+    setAnkiLoading(true);
+    try {
+      const msg = await updateLastCard(metadata, ankiField);
+      setToast({ message: msg, type: 'success' });
+    } catch (err: any) {
+      setToast({ message: err.message || 'Anki update failed', type: 'error' });
+    } finally {
+      setAnkiLoading(false);
+      setTimeout(() => setToast(null), 3000);
+    }
   };
 
   const handleTranslate = async () => {
@@ -116,6 +147,35 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({ activeSenten
           >
             <CopyIcon />
           </button>
+
+          {!isMobile && (
+            <button 
+              onClick={handleAnki}
+              title="Update Latest Anki Card"
+              style={{
+                background: 'var(--btn-bg)',
+                color: 'var(--btn-text)',
+                padding: '8px 12px',
+                borderRadius: '0', 
+                cursor: ankiLoading ? 'wait' : 'pointer',
+                boxShadow: 'var(--btn-shadow)',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background 0.3s, color 0.3s, box-shadow 0.3s',
+              }}
+              disabled={ankiLoading}
+            >
+              <div style={{ 
+                animation: ankiLoading ? 'spin 1s linear infinite' : 'none', 
+                display: 'flex', 
+                alignItems: 'center' 
+              }}>
+                <AnkiIcon />
+              </div>
+            </button>
+          )}
         </div>
 
         {translation && (
@@ -144,6 +204,7 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({ activeSenten
           color: 'var(--btn-text)',
           padding: '10px 20px',
           borderRadius: '0',
+          borderLeft: `3px solid ${toast.type === 'success' ? '#4caf50' : '#ef5350'}`,
           boxShadow: '0 8px 16px rgba(0,0,0,0.5)',
           zIndex: 9999,
           fontSize: '14px',
@@ -151,7 +212,7 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({ activeSenten
           fontFamily: 'sans-serif',
           animation: 'fadeSlideUpToast 0.3s ease-out forwards'
         }}>
-          {toast}
+          {toast.message}
         </div>
       )}
     </>

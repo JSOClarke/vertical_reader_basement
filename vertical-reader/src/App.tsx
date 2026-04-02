@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { ReaderContainer } from './features/reader/components/ReaderContainer';
 import { BottomHUD } from './features/reader/components/BottomHUD';
+import { AnkiSettingsModal } from './features/anki/components/AnkiSettingsModal';
 import { SAMPLE_DATA } from './data/mockBook';
 import type { BookMetadata } from './types';
 import './App.css'; 
@@ -16,6 +17,10 @@ function App() {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const showExtraUI = !isMobile || mobileMenuOpen;
+
+  // Anki
+  const [ankiField, setAnkiField] = useState('');
+  const [ankiModalOpen, setAnkiModalOpen] = useState(false);
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('theme') as 'dark'|'light') || 'dark';
@@ -38,6 +43,7 @@ function App() {
         activeIndex={activeIndex} 
         isMobile={isMobile}
         showExtraUI={showExtraUI}
+        ankiField={ankiField}
       />
       
       {!isMobile && (
@@ -88,7 +94,7 @@ function App() {
               <button
                 onClick={() => {
                   if (bookData.length === 0) { alert("No data loaded!"); return; }
-                  const profile = { sentences: bookData, activeIndex, metadata };
+                  const profile = { sentences: bookData, activeIndex, metadata, ankiField };
                   const blob = new Blob([JSON.stringify(profile)], { type: "application/json" });
                   const url = URL.createObjectURL(blob);
                   const link = document.createElement('a');
@@ -115,6 +121,7 @@ function App() {
                         setBookData(json.sentences);
                         setActiveIndex(json.activeIndex);
                         setMetadata(json.metadata);
+                        if (json.ankiField) setAnkiField(json.ankiField);
                         setError(null);
                       } else { alert('Invalid profile format.'); }
                     } catch { alert('Failed to parse profile.'); }
@@ -147,6 +154,12 @@ function App() {
                   setMobileMenuOpen(false);
                 }} style={{ display: 'none' }} />
               </label>
+              <button
+                onClick={() => { setAnkiModalOpen(true); setMobileMenuOpen(false); }}
+                style={menuItemStyle}
+              >
+                Anki Settings
+              </button>
             </div>
           )}
         </div>
@@ -198,7 +211,7 @@ function App() {
               <button
                 onClick={() => {
                   if (bookData.length === 0) { alert("No data loaded!"); return; }
-                  const profile = { sentences: bookData, activeIndex, metadata };
+                  const profile = { sentences: bookData, activeIndex, metadata, ankiField };
                   const blob = new Blob([JSON.stringify(profile)], { type: "application/json" });
                   const url = URL.createObjectURL(blob);
                   const link = document.createElement('a');
@@ -228,6 +241,7 @@ function App() {
                           setBookData(json.sentences);
                           setActiveIndex(json.activeIndex);
                           setMetadata(json.metadata);
+                          if (json.ankiField) setAnkiField(json.ankiField);
                           setError(null);
                         } else { alert('Invalid profile format.'); }
                       } catch { alert('Failed to parse profile.'); }
@@ -267,9 +281,23 @@ function App() {
                   style={{ display: 'none' }} 
                 />
               </label>
+              <button
+                onClick={() => { setAnkiModalOpen(true); setMobileMenuOpen(false); }}
+                style={menuItemStyle}
+              >
+                Anki Settings
+              </button>
             </div>
           )}
         </div>
+      )}
+
+      {ankiModalOpen && (
+        <AnkiSettingsModal
+          ankiField={ankiField}
+          onSave={setAnkiField}
+          onClose={() => setAnkiModalOpen(false)}
+        />
       )}
 
       {error && (
