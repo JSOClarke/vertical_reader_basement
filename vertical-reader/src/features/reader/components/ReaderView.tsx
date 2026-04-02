@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Sentence } from './Sentence';
+import { useSwipe } from '../../../hooks/useSwipe';
 import styles from './Reader.module.css';
 import type { ReaderProps } from '../../../types';
 
@@ -12,10 +13,26 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
   activeIndex,
   onIndexChange,
   tapToSelect,
+  showArrows,
   assignRef
 }) => {
+  const goNext = useCallback(() => {
+    onIndexChange((prev: number) => Math.min(prev + 1, sentences.length - 1));
+  }, [onIndexChange, sentences.length]);
+
+  const goPrev = useCallback(() => {
+    onIndexChange((prev: number) => Math.max(prev - 1, 0));
+  }, [onIndexChange]);
+
+  // Swipe right = next sentence, swipe left = previous (vertical-rl layout)
+  const { onTouchStart, onTouchEnd } = useSwipe(goPrev, goNext);
+
   return (
-    <div className={styles.readerContainer}>
+    <div
+      className={styles.readerContainer}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
       <div className={styles.sentencesWrapper}>
         {sentences.map((text, idx) => (
           <Sentence

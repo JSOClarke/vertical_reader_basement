@@ -21,7 +21,7 @@
   --bg-color: #f7f7f9;
   --text-color: #1a1a1a;
   --text-highlight: #000000;
-  --text-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  --text-shadow: none;
   --btn-bg: rgba(26, 26, 26, 0.85);
   --btn-text: #f7f7f9;
   --btn-shadow: 0 4px 10px rgba(0,0,0,0.15);

@@ -5,7 +5,7 @@ import { useReaderState } from '../hooks/useReaderState';
 import { useScrollCenter } from '../hooks/useScrollCenter';
 import type { ReaderProps } from '../../../types';
 
-export const ReaderContainer: React.FC<ReaderProps> = ({ sentences, activeIndex, onIndexChange, tapToSelect }) => {
+export const ReaderContainer: React.FC<ReaderProps> = ({ sentences, activeIndex, onIndexChange, tapToSelect, showArrows }) => {
   useReaderState(sentences.length, onIndexChange);
   const { assignRef } = useScrollCenter(activeIndex, sentences.length);
 
@@ -16,13 +16,16 @@ export const ReaderContainer: React.FC<ReaderProps> = ({ sentences, activeIndex,
         activeIndex={activeIndex}
         onIndexChange={onIndexChange}
         tapToSelect={tapToSelect}
+        showArrows={showArrows}
         assignRef={assignRef}
       />
-      <NavArrows
-        activeIndex={activeIndex}
-        totalSentences={sentences.length}
-        onIndexChange={onIndexChange}
-      />
+      {showArrows && (
+        <NavArrows
+          activeIndex={activeIndex}
+          totalSentences={sentences.length}
+          onIndexChange={onIndexChange}
+        />
+      )}
     </>
   );
 };

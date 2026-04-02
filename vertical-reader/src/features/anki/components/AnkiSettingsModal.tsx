@@ -4,9 +4,10 @@ interface AnkiSettingsModalProps {
   ankiField: string;
   onSave: (field: string) => void;
   onClose: () => void;
+  t: any;
 }
 
-export const AnkiSettingsModal: React.FC<AnkiSettingsModalProps> = ({ ankiField, onSave, onClose }) => {
+export const AnkiSettingsModal: React.FC<AnkiSettingsModalProps> = ({ ankiField, onSave, onClose, t }) => {
   const [field, setField] = useState(ankiField);
 
   return (
@@ -35,17 +36,17 @@ export const AnkiSettingsModal: React.FC<AnkiSettingsModalProps> = ({ ankiField,
         onClick={e => e.stopPropagation()}
       >
         <h3 style={{ margin: '0 0 20px 0', fontSize: '16px', fontWeight: 'bold' }}>
-          Anki Settings
+          {t.ankiSettingsTitle}
         </h3>
         
         <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', opacity: 0.7 }}>
-          Target Note Field
+          {t.targetFieldLabel}
         </label>
         <input
           type="text"
           value={field}
           onChange={e => setField(e.target.value)}
-          placeholder="e.g. Back, Extra, Picture"
+          placeholder={t.targetFieldPlaceholder}
           style={{
             width: '100%',
             padding: '10px 14px',
@@ -60,7 +61,7 @@ export const AnkiSettingsModal: React.FC<AnkiSettingsModalProps> = ({ ankiField,
           }}
         />
         <p style={{ fontSize: '12px', opacity: 0.5, margin: '8px 0 20px 0' }}>
-          The EPUB cover image will be appended to this field on your most recent Anki card.
+          {t.ankiDescription}
         </p>
 
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
@@ -77,7 +78,7 @@ export const AnkiSettingsModal: React.FC<AnkiSettingsModalProps> = ({ ankiField,
               fontFamily: 'sans-serif',
             }}
           >
-            Cancel
+            {t.cancel}
           </button>
           <button
             onClick={() => { onSave(field); onClose(); }}
@@ -93,7 +94,7 @@ export const AnkiSettingsModal: React.FC<AnkiSettingsModalProps> = ({ ankiField,
               fontFamily: 'sans-serif',
             }}
           >
-            Save
+            {t.save}
           </button>
         </div>
       </div>

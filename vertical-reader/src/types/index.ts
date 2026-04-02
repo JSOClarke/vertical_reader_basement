@@ -10,6 +10,7 @@ export interface ReaderProps {
   activeIndex: number;
   onIndexChange: (index: number | ((prev: number) => number)) => void;
   tapToSelect: boolean;
+  showArrows: boolean;
 }
 
 export interface BookMetadata {
@@ -18,9 +19,15 @@ export interface BookMetadata {
   coverImage?: string;
 }
 
+export interface UserStats {
+  totalCharactersRead: number;
+  readingDays: string[]; // Unique "YYYY-MM-DD" entries
+}
+
 export interface UserProfile {
   sentences: string[];
   activeIndex: number;
   metadata?: BookMetadata;
   ankiField?: string;
+  stats?: UserStats;
 }
