@@ -21,6 +21,17 @@ function App() {
   const [ankiField, setAnkiField] = useState('');
   const [ankiModalOpen, setAnkiModalOpen] = useState(false);
 
+  // Tap-to-select: when off, clicking a sentence won't change the active index
+  const [tapToSelect, setTapToSelect] = useState<boolean>(() => {
+    const stored = localStorage.getItem('tapToSelect');
+    return stored === null ? true : stored === 'true';
+  });
+  const toggleTapToSelect = () => setTapToSelect(prev => {
+    const next = !prev;
+    localStorage.setItem('tapToSelect', String(next));
+    return next;
+  });
+
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('theme') as 'dark'|'light') || 'dark';
   });
@@ -34,7 +45,7 @@ function App() {
 
   return (
     <>
-      <ReaderContainer sentences={bookData} activeIndex={activeIndex} onIndexChange={setActiveIndex} />
+      <ReaderContainer sentences={bookData} activeIndex={activeIndex} onIndexChange={setActiveIndex} tapToSelect={tapToSelect} />
       
       <BottomHUD 
         metadata={metadata} 
@@ -88,6 +99,9 @@ function App() {
             }}>
               <button onClick={() => { toggleTheme(); }} style={menuItemStyle}>
                 {theme === 'dark' ? '☀ Light Mode' : '● Dark Mode'}
+              </button>
+              <button onClick={() => { toggleTapToSelect(); }} style={menuItemStyle}>
+                {tapToSelect ? '● Tap Select' : '○ Tap Select'}
               </button>
               <button
                 onClick={() => {
@@ -205,6 +219,12 @@ function App() {
                 style={menuItemStyle}
               >
                 {theme === 'dark' ? '☀ Light Mode' : '● Dark Mode'}
+              </button>
+              <button
+                onClick={() => { toggleTapToSelect(); }}
+                style={menuItemStyle}
+              >
+                {tapToSelect ? '● Tap Select' : '○ Tap Select'}
               </button>
               <button
                 onClick={() => {

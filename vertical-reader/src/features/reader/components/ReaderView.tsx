@@ -11,6 +11,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
   sentences,
   activeIndex,
   onIndexChange,
+  tapToSelect,
   assignRef
 }) => {
   return (
@@ -23,6 +24,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
             text={text}
             isActive={idx === activeIndex}
             onClick={() => onIndexChange(idx)}
+            tapToSelect={tapToSelect}
           />
         ))}
       </div>
