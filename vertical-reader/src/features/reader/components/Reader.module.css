@@ -1,0 +1,38 @@
+.readerContainer {
+  width: 100vw;
+  height: 100vh;
+  writing-mode: vertical-rl;
+  overflow: hidden;
+  font-family: inherit;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  cursor: default;
+  user-select: none;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+.sentencesWrapper {
+  height: 100vh;
+  box-sizing: border-box;
+  padding: 10vh 50vw; /* 10vh vertical padding keeps text off edges, 50vw centers first/last elements */
+}
+
+.sentence {
+  display: block;
+  padding: 0 40px;
+  max-height: 80vh; /* Forces vertical wrapping if text is too long */
+  font-size: 24px;
+  line-height: 2;
+  opacity: 0.2;
+  transition: opacity 0.4s ease, transform 0.4s ease, filter 0.4s ease;
+  cursor: pointer;
+  white-space: pre-wrap; /* Keeps normal wrapping if it exceeds height */
+}
+
+.sentence.active {
+  opacity: 1;
+  font-size: 32px;
+  color: var(--text-highlight);
+  transform: scale(1.05);
+  filter: drop-shadow(var(--text-shadow));
+}
