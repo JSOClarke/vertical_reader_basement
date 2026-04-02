@@ -10,9 +10,19 @@ interface BottomHUDProps {
   activeIndex: number;
   isMobile?: boolean;
   ankiField?: string;
+  onAnkiMine: (sentence: string) => void;
+  t: any;
 }
 
-export const BottomHUD: React.FC<BottomHUDProps> = ({ metadata, sentences, activeIndex, isMobile = false, ankiField = '' }) => {
+export const BottomHUD: React.FC<BottomHUDProps> = ({ 
+  metadata, 
+  sentences, 
+  activeIndex, 
+  isMobile = false, 
+  ankiField = '',
+  onAnkiMine,
+  t
+}) => {
   const activeSentence = sentences[activeIndex] || '';
 
   return (
@@ -52,7 +62,14 @@ export const BottomHUD: React.FC<BottomHUDProps> = ({ metadata, sentences, activ
           {!isMobile && <ProgressBar sentences={sentences} activeIndex={activeIndex} />}
         </div>
 
-        <TranslationPanel activeSentence={activeSentence} isMobile={isMobile} metadata={metadata} ankiField={ankiField} />
+        <TranslationPanel 
+          activeSentence={activeSentence} 
+          isMobile={isMobile} 
+          metadata={metadata} 
+          ankiField={ankiField}
+          onAnkiMine={onAnkiMine}
+          t={t}
+        />
       </div>
     </>
   );

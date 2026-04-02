@@ -34,6 +34,22 @@ export const translations = {
     failedParseProfile: 'Failed to parse profile.',
     noTextInEpub: 'No text found in EPUB.',
     failedParseEpub: 'Failed to parse EPUB',
+
+    // Mining History
+    miningHistory: 'Mining History',
+    totalCardsMined: 'Total Cards Mined',
+    recentMinedCards: 'Recent Activity',
+    unknownBook: 'Unknown Book',
+    noHistory: 'No cards mined yet.',
+    bookHeader: 'Book',
+    sentenceHeader: 'Sentence',
+
+    // Toasts
+    copiedToast: 'Copied to clipboard!',
+    copyFailToast: 'Failed to copy',
+    setAnkiFieldToast: 'Set Anki field in ☰ menu first',
+    ankiSuccessToast: 'Anki card updated successfully!',
+    ankiFailToast: 'Anki update failed',
   },
   ja: {
     // Menu
@@ -68,5 +84,21 @@ export const translations = {
     failedParseProfile: 'プロファイルの解析に失敗しました。',
     noTextInEpub: 'EPUB内にテキストが見つかりませんでした。',
     failedParseEpub: 'EPUBの解析に失敗しました。',
+
+    // Mining History
+    miningHistory: '作成履歴',
+    totalCardsMined: '総単語登録数',
+    recentMinedCards: '最近の活動',
+    unknownBook: '不明な作品',
+    noHistory: '履歴はありません。',
+    bookHeader: '作品',
+    sentenceHeader: '文章',
+
+    // Toasts
+    copiedToast: 'クリップボードにコピーしました！',
+    copyFailToast: 'コピーに失敗しました',
+    setAnkiFieldToast: '先に ☰ メニューから対象フィールドを設定してください',
+    ankiSuccessToast: 'Ankiカードが正常に更新されました！',
+    ankiFailToast: 'Ankiの更新に失敗しました',
   }
 };

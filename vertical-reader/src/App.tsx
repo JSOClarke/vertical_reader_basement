@@ -7,7 +7,7 @@ import { StatsView } from './features/stats/components/StatsView';
 import { SAMPLE_DATA } from './data/mockBook';
 import { translations } from './localization/translations';
 import type { Language } from './localization/translations';
-import type { BookMetadata, UserProfile } from './types';
+import type { BookMetadata, UserProfile, UserStats } from './types';
 import './App.css'; 
 
 const PROFILE_STORAGE_KEY = 'vertical-reader-profile';
@@ -35,9 +35,10 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   // Stats
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<UserStats>({
     totalCharactersRead: saved.current?.stats?.totalCharactersRead ?? 0,
     readingDays: saved.current?.stats?.readingDays ?? [],
+    miningHistory: saved.current?.stats?.miningHistory ?? [],
   });
   const [currentView, setCurrentView] = useState<'reader' | 'stats'>('reader');
   const prevIndexRef = useRef<number>(activeIndex);
@@ -109,6 +110,20 @@ function App() {
     prevIndexRef.current = activeIndex;
   }, [activeIndex, bookData]);
 
+  const handleAnkiMine = (sentence: string) => {
+    setStats(prev => ({
+      ...prev,
+      miningHistory: [
+        {
+          bookTitle: metadata?.title || t.unknownBook,
+          sentence,
+          timestamp: Date.now(),
+        },
+        ...(prev.miningHistory || []),
+      ].slice(0, 100), // Cap at 100 for minimalist performance
+    }));
+  };
+
   // Tap-to-select: when off, clicking a sentence won't change the active index
   const [tapToSelect, setTapToSelect] = useState<boolean>(() => {
     const stored = localStorage.getItem('tapToSelect');
@@ -160,6 +175,8 @@ function App() {
             activeIndex={activeIndex} 
             isMobile={isMobile}
             ankiField={ankiField}
+            onAnkiMine={handleAnkiMine}
+            t={t}
           />
         </>
       ) : (

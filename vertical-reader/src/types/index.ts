@@ -19,9 +19,16 @@ export interface BookMetadata {
   coverImage?: string;
 }
 
+export interface MinedCard {
+  bookTitle: string;
+  sentence: string;
+  timestamp: number;
+}
+
 export interface UserStats {
   totalCharactersRead: number;
   readingDays: string[]; // Unique "YYYY-MM-DD" entries
+  miningHistory?: MinedCard[];
 }
 
 export interface UserProfile {

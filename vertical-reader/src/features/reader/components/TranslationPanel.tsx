@@ -33,9 +33,11 @@ interface TranslationPanelProps {
   isMobile?: boolean;
   metadata?: BookMetadata;
   ankiField?: string;
+  onAnkiMine: (sentence: string) => void;
+  t: any;
 }
 
-export const TranslationPanel: React.FC<TranslationPanelProps> = ({ activeSentence, isMobile = false, metadata, ankiField = '' }) => {
+export const TranslationPanel: React.FC<TranslationPanelProps> = ({ activeSentence, isMobile = false, metadata, ankiField = '', onAnkiMine, t }) => {
   const [translation, setTranslation] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [ankiLoading, setAnkiLoading] = useState(false);
@@ -50,25 +52,26 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({ activeSenten
     if (!activeSentence || !activeSentence.trim()) return;
     try {
       await navigator.clipboard.writeText(activeSentence);
-      setToast({ message: 'Copied to clipboard!', type: 'success' });
+      setToast({ message: t.copiedToast, type: 'success' });
     } catch (err) {
-      setToast({ message: 'Failed to copy', type: 'error' });
+      setToast({ message: t.copyFailToast, type: 'error' });
     }
     setTimeout(() => setToast(null), 3000);
   };
 
   const handleAnki = async () => {
     if (!ankiField || !ankiField.trim()) {
-      setToast({ message: 'Set Anki field in ☰ menu first', type: 'error' });
+      setToast({ message: t.setAnkiFieldToast, type: 'error' });
       setTimeout(() => setToast(null), 3000);
       return;
     }
     setAnkiLoading(true);
     try {
-      const msg = await updateLastCard(metadata, ankiField);
-      setToast({ message: msg, type: 'success' });
+      await updateLastCard(metadata, ankiField);
+      setToast({ message: t.ankiSuccessToast, type: 'success' });
+      onAnkiMine(activeSentence);
     } catch (err: any) {
-      setToast({ message: err.message || 'Anki update failed', type: 'error' });
+      setToast({ message: t.ankiFailToast, type: 'error' });
     } finally {
       setAnkiLoading(false);
       setTimeout(() => setToast(null), 3000);
