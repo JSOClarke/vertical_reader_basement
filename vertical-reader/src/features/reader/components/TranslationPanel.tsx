@@ -20,9 +20,10 @@ const CopyIcon = () => (
 
 interface TranslationPanelProps {
   activeSentence: string;
+  isMobile?: boolean; // NEW UI HOOK
 }
 
-export const TranslationPanel: React.FC<TranslationPanelProps> = ({ activeSentence }) => {
+export const TranslationPanel: React.FC<TranslationPanelProps> = ({ activeSentence, isMobile = false }) => {
   const [translation, setTranslation] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -125,7 +126,7 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({ activeSenten
             fontFamily: 'sans-serif',
             borderLeft: '2px solid var(--text-highlight)',
             paddingLeft: '15px',
-            maxWidth: '500px',
+            maxWidth: isMobile ? '80vw' : '500px',
             animation: 'fadeSlideRight 0.4s ease-out forwards'
           }}>
             <p style={{ margin: 0, opacity: 0.9, textShadow: 'var(--text-shadow)' }}>{translation}</p>

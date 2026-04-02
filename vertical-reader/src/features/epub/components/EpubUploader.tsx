@@ -6,9 +6,10 @@ import type { EpubData } from '../utils/epubParser';
 interface EpubUploaderProps {
   onEpubLoaded: (data: EpubData) => void;
   onError: (error: string) => void;
+  isMobile?: boolean;
 }
 
-export const EpubUploader: React.FC<EpubUploaderProps> = ({ onEpubLoaded, onError }) => {
+export const EpubUploader: React.FC<EpubUploaderProps> = ({ onEpubLoaded, onError, isMobile = false }) => {
   const [loading, setLoading] = useState(false);
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -34,9 +35,9 @@ export const EpubUploader: React.FC<EpubUploaderProps> = ({ onEpubLoaded, onErro
 
   return (
     <div style={{
-      position: 'fixed',
-      bottom: '30px',
-      right: '30px',
+      position: isMobile ? 'static' : 'fixed',
+      bottom: isMobile ? undefined : '30px',
+      right: isMobile ? undefined : '30px',
       zIndex: 1000
     }}>
       <label style={{

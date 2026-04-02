@@ -3,6 +3,7 @@ import React from 'react';
 interface ThemeToggleProps {
   theme: 'light' | 'dark';
   toggleTheme: () => void;
+  isMobile?: boolean;
 }
 
 const SunIcon = () => (
@@ -25,14 +26,14 @@ const MoonIcon = () => (
   </svg>
 );
 
-export const ThemeToggle: React.FC<ThemeToggleProps> = ({ theme, toggleTheme }) => {
+export const ThemeToggle: React.FC<ThemeToggleProps> = ({ theme, toggleTheme, isMobile = false }) => {
   return (
     <button 
       onClick={toggleTheme}
       style={{
-        position: 'fixed',
-        top: '30px',
-        right: '30px',
+        position: isMobile ? 'static' : 'fixed',
+        top: isMobile ? undefined : '30px',
+        right: isMobile ? undefined : '30px',
         zIndex: 1000,
         background: 'var(--btn-bg)',
         color: 'var(--btn-text)',

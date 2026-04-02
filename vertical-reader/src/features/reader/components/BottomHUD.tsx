@@ -8,9 +8,11 @@ interface BottomHUDProps {
   metadata?: BookMetadata;
   sentences: string[];
   activeIndex: number;
+  isMobile?: boolean; // NEW HOOK DELEGATION
+  showExtraUI?: boolean;
 }
 
-export const BottomHUD: React.FC<BottomHUDProps> = ({ metadata, sentences, activeIndex }) => {
+export const BottomHUD: React.FC<BottomHUDProps> = ({ metadata, sentences, activeIndex, isMobile = false, showExtraUI = true }) => {
   const [isHovered, setIsHovered] = useState(false);
   const activeSentence = sentences[activeIndex] || '';
 
@@ -18,15 +20,15 @@ export const BottomHUD: React.FC<BottomHUDProps> = ({ metadata, sentences, activ
     <div 
       style={{
         position: 'fixed',
-        bottom: '30px',
-        left: '30px',
+        bottom: isMobile ? '15px' : '30px',
+        left: isMobile ? '15px' : '30px',
         zIndex: 1000,
         display: 'flex',
-        flexDirection: 'row',
-        gap: '40px', 
-        alignItems: 'flex-end',
-        maxWidth: '90vw',
-        opacity: isHovered ? 1 : 0.4,
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? '20px' : '40px', 
+        alignItems: isMobile ? 'flex-start' : 'flex-end',
+        maxWidth: isMobile ? '95vw' : '90vw',
+        opacity: isHovered || isMobile ? 1 : 0.4, // Keep totally opaque on mobile as hover is useless on touch
         transition: 'opacity 0.3s ease'
       }}
       onMouseEnter={() => setIsHovered(true)}
@@ -37,11 +39,11 @@ export const BottomHUD: React.FC<BottomHUDProps> = ({ metadata, sentences, activ
         alignItems: 'center',
         gap: '20px'
       }}>
-        <BookInfo metadata={metadata} />
+        {showExtraUI && <BookInfo metadata={metadata} />}
         <ProgressBar sentences={sentences} activeIndex={activeIndex} />
       </div>
 
-      <TranslationPanel activeSentence={activeSentence} />
+      <TranslationPanel activeSentence={activeSentence} isMobile={isMobile} />
     </div>
   );
 };

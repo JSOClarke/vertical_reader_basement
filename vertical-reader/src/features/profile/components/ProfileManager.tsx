@@ -7,9 +7,10 @@ interface ProfileManagerProps {
   activeIndex: number;
   metadata?: BookMetadata;
   onLoadProfile: (profile: UserProfile) => void;
+  isMobile?: boolean;
 }
 
-export const ProfileManager: React.FC<ProfileManagerProps> = ({ sentences, activeIndex, metadata, onLoadProfile }) => {
+export const ProfileManager: React.FC<ProfileManagerProps> = ({ sentences, activeIndex, metadata, onLoadProfile, isMobile = false }) => {
   const handleExport = () => {
     if (sentences.length === 0) {
       alert("No data loaded to export!");
@@ -52,9 +53,9 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({ sentences, activ
   return (
     <div 
       style={{ 
-        position: 'fixed', 
-        top: '30px', 
-        left: '30px', 
+        position: isMobile ? 'static' : 'fixed', 
+        top: isMobile ? undefined : '30px', 
+        left: isMobile ? undefined : '30px', 
         zIndex: 1000, 
         display: 'flex', 
         gap: '15px'
