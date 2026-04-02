@@ -1,16 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { ReaderContainer } from './features/reader/components/ReaderContainer';
 import { BottomHUD } from './features/reader/components/BottomHUD';
 import { AnkiSettingsModal } from './features/anki/components/AnkiSettingsModal';
 import { SAMPLE_DATA } from './data/mockBook';
-import type { BookMetadata } from './types';
+import type { BookMetadata, UserProfile } from './types';
 import './App.css'; 
 
+const PROFILE_STORAGE_KEY = 'vertical-reader-profile';
+
+function loadSavedProfile(): UserProfile | null {
+  try {
+    const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed.sentences) && typeof parsed.activeIndex === 'number') {
+      return parsed as UserProfile;
+    }
+  } catch {
+    // corrupted data — ignore
+  }
+  return null;
+}
+
 function App() {
-  const [bookData, setBookData] = useState<string[]>(SAMPLE_DATA);
-  const [activeIndex, setActiveIndex] = useState<number>(0);
-  const [metadata, setMetadata] = useState<BookMetadata | undefined>(undefined);
+  const saved = useRef(loadSavedProfile());
+
+  const [bookData, setBookData] = useState<string[]>(saved.current?.sentences ?? SAMPLE_DATA);
+  const [activeIndex, setActiveIndex] = useState<number>(saved.current?.activeIndex ?? 0);
+  const [metadata, setMetadata] = useState<BookMetadata | undefined>(saved.current?.metadata);
   const [error, setError] = useState<string | null>(null);
 
   // Responsive Layout Overrides
@@ -18,8 +36,21 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Anki
-  const [ankiField, setAnkiField] = useState('');
+  const [ankiField, setAnkiField] = useState(saved.current?.ankiField ?? '');
   const [ankiModalOpen, setAnkiModalOpen] = useState(false);
+
+  // Auto-persist profile to localStorage (debounced)
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      try {
+        const profile: UserProfile = { sentences: bookData, activeIndex, metadata, ankiField };
+        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+      } catch {
+        // localStorage full or unavailable — silently ignore
+      }
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [bookData, activeIndex, metadata, ankiField]);
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('theme') as 'dark'|'light') || 'dark';
