@@ -14,6 +14,40 @@ import type { Language } from './localization/translations';
 import type { BookMetadata, UserProfile, UserStats, ReaderAesthetics } from './types';
 import './App.css'; 
 
+const menuItemStyle: React.CSSProperties = {
+  background: 'transparent',
+  color: 'var(--btn-text)',
+  padding: '14px 24px',
+  border: 'none',
+  borderBottom: '1px solid rgba(128,128,128,0.08)',
+  fontSize: '13px',
+  fontFamily: "'Inter', 'system-ui', sans-serif",
+  fontWeight: '500',
+  textAlign: 'left',
+  cursor: 'pointer',
+  transition: 'all 0.2s ease',
+  display: 'flex',
+  alignItems: 'center',
+  width: '100%',
+  gap: '12px'
+};
+
+const hudButtonStyle: React.CSSProperties = {
+  background: 'var(--btn-bg)',
+  color: 'var(--btn-text)',
+  padding: '10px 16px',
+  border: 'none',
+  fontSize: '12px',
+  fontFamily: "'Inter', 'system-ui', sans-serif",
+  fontWeight: '600',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  boxShadow: 'var(--btn-shadow)',
+  transition: 'opacity 0.2s',
+  borderRadius: '0'
+};
+
 const MenuIcon = ({ open }: { open: boolean }) => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     {open ? (
@@ -109,6 +143,7 @@ function App() {
   const saved = useRef(loadSavedProfile());
   const { isConnected, isPushing, isPulling, lastSynced, connect, push, pull } = useGoogleDrive();
 
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [bookData, setBookData] = useState<string[]>(saved.current?.sentences ?? SAMPLE_DATA);
   const [activeIndex, setActiveIndex] = useState<number>(saved.current?.activeIndex ?? 0);
   const [metadata, setMetadata] = useState<BookMetadata | undefined>(saved.current?.metadata);
@@ -203,12 +238,25 @@ function App() {
           aesthetics
         };
         localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+        if (isConnected) setHasUnsavedChanges(true);
       } catch {
         // localStorage full or unavailable — silently ignore
       }
     }, 500);
     return () => clearTimeout(timeout);
-  }, [bookData, activeIndex, metadata, ankiField, stats, bookmarks]);
+  }, [bookData, activeIndex, metadata, ankiField, stats, bookmarks, aesthetics, isConnected]);
+
+  // Handle Browser Exit Confirmation
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges && isConnected) {
+        e.preventDefault();
+        e.returnValue = ''; // Trigger standard browser prompt
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges, isConnected]);
 
   // Track reading stats (characters and days)
   useEffect(() => {
@@ -260,29 +308,29 @@ function App() {
         label={t.fontSizeLabel || "Font Size"} 
         value={aesthetics.fontSize} 
         unit="px"
-        onDecrease={() => setAesthetics(prev => ({ ...prev, fontSize: Math.max(12, prev.fontSize - 2) }))}
-        onIncrease={() => setAesthetics(prev => ({ ...prev, fontSize: Math.min(48, prev.fontSize + 2) }))}
+        onDecrease={() => { setAesthetics(prev => ({ ...prev, fontSize: Math.max(12, prev.fontSize - 2) })); setHasUnsavedChanges(true); }}
+        onIncrease={() => { setAesthetics(prev => ({ ...prev, fontSize: Math.min(48, prev.fontSize + 2) })); setHasUnsavedChanges(true); }}
       />
       <ValueStepper 
         label={t.verticalMarginLabel || "Top/Bottom"} 
         value={aesthetics.verticalMargin} 
         unit="vh"
-        onDecrease={() => setAesthetics(prev => ({ ...prev, verticalMargin: Math.max(0, prev.verticalMargin - 1) }))}
-        onIncrease={() => setAesthetics(prev => ({ ...prev, verticalMargin: Math.min(30, prev.verticalMargin + 1) }))}
+        onDecrease={() => { setAesthetics(prev => ({ ...prev, verticalMargin: Math.max(0, prev.verticalMargin - 1) })); setHasUnsavedChanges(true); }}
+        onIncrease={() => { setAesthetics(prev => ({ ...prev, verticalMargin: Math.min(30, prev.verticalMargin + 1) })); setHasUnsavedChanges(true); }}
       />
       <ValueStepper 
         label={t.horizontalMarginLabel || "Left/Right"} 
         value={aesthetics.horizontalMargin} 
         unit="px"
-        onDecrease={() => setAesthetics(prev => ({ ...prev, horizontalMargin: Math.max(0, prev.horizontalMargin - 5) }))}
-        onIncrease={() => setAesthetics(prev => ({ ...prev, horizontalMargin: Math.min(100, prev.horizontalMargin + 5) }))}
+        onDecrease={() => { setAesthetics(prev => ({ ...prev, horizontalMargin: Math.max(0, prev.horizontalMargin - 5) })); setHasUnsavedChanges(true); }}
+        onIncrease={() => { setAesthetics(prev => ({ ...prev, horizontalMargin: Math.min(100, prev.horizontalMargin + 5) })); setHasUnsavedChanges(true); }}
       />
       <ValueStepper 
         label={t.readingWidthLabel || "Viewing Width"} 
         value={aesthetics.readingWidth} 
         unit="%"
-        onDecrease={() => setAesthetics(prev => ({ ...prev, readingWidth: Math.max(30, prev.readingWidth - 5) }))}
-        onIncrease={() => setAesthetics(prev => ({ ...prev, readingWidth: Math.min(100, prev.readingWidth + 5) }))}
+        onDecrease={() => { setAesthetics(prev => ({ ...prev, readingWidth: Math.max(30, prev.readingWidth - 5) })); setHasUnsavedChanges(true); }}
+        onIncrease={() => { setAesthetics(prev => ({ ...prev, readingWidth: Math.min(100, prev.readingWidth + 5) })); setHasUnsavedChanges(true); }}
       />
       
       <MenuCategory label={t.readingSettings || "Reading"} />
@@ -408,6 +456,7 @@ function App() {
         ...(prev.miningHistory || []),
       ].slice(0, 100), // Cap at 100 for minimalist performance
     }));
+    setHasUnsavedChanges(true);
   };
 
   const handleToggleBookmark = () => {
@@ -417,6 +466,7 @@ function App() {
       }
       return [...prev, activeIndex].sort((a, b) => a - b);
     });
+    setHasUnsavedChanges(true);
   };
 
   const handleCloudPush = async () => {
@@ -431,7 +481,8 @@ function App() {
     };
     const success = await push(profile);
     if (success) {
-      showToast(t.cloudPushSuccess, 'success');
+      showToast(t.cloudPushSuccess || "Sync Successful!", 'success');
+      setHasUnsavedChanges(false);
     } else {
       showToast(t.cloudSyncError, 'error');
     }
@@ -462,8 +513,13 @@ function App() {
     'B': () => handleToggleBookmark(),
   });
 
-  const handleJumpToIndex = (index: number) => {
+  const handleActiveIndexChange = (index: number) => {
     setActiveIndex(index);
+    if (isConnected) setHasUnsavedChanges(true); // Track progress as "Unsaved Cloud Change"
+  };
+
+  const handleJumpToIndex = (index: number) => {
+    handleActiveIndexChange(index);
     setJumpModalOpen(false);
   };
 
@@ -653,40 +709,55 @@ function App() {
               {t.connectDrive || "Connect Drive"}
             </button>
           ) : (
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <button 
-                onClick={() => handleCloudPush()} 
-                disabled={isPushing || isPulling}
-                style={{ 
-                  ...hudButtonStyle, 
-                  opacity: isPushing || isPulling ? 0.6 : 0.3,
-                  transition: 'opacity 0.3s ease'
-                }}
-                onMouseEnter={e => { if (!isPushing && !isPulling) e.currentTarget.style.opacity = '1'; }}
-                onMouseLeave={e => { if (!isPushing && !isPulling) e.currentTarget.style.opacity = '0.3'; }}
-                title={t.pushTitle}
-              >
-                {isPushing ? '↑ Saving...' : '↑ Save'}
-              </button>
-              <button 
-                onClick={() => handleCloudPull()} 
-                disabled={isPushing || isPulling}
-                style={{ 
-                  ...hudButtonStyle, 
-                  opacity: isPushing || isPulling ? 0.6 : 0.3,
-                  transition: 'opacity 0.3s ease'
-                }}
-                onMouseEnter={e => { if (!isPushing && !isPulling) e.currentTarget.style.opacity = '1'; }}
-                onMouseLeave={e => { if (!isPushing && !isPulling) e.currentTarget.style.opacity = '0.3'; }}
-                title={t.pullTitle}
-              >
-                {isPulling ? '↓ Loading...' : '↓ Load'}
-              </button>
-              {lastSynced && (
-                <div style={{ padding: '0 10px', fontSize: '9px', opacity: 0.3, maxWidth: '60px', lineHeight: '1.1' }}>
-                  Sync: {lastSynced.split(',')[1]}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+              {hasUnsavedChanges && !isPushing && (
+                <div style={{ 
+                  fontSize: '9px', 
+                  letterSpacing: '0.15em', 
+                  fontWeight: '300', 
+                  color: '#f59e0b', 
+                  opacity: 0.8,
+                  textTransform: 'uppercase',
+                  marginBottom: '-2px'
+                }}>
+                  {t.unsavedChanges || "Unsaved"}
                 </div>
               )}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button 
+                  onClick={() => handleCloudPush()} 
+                  disabled={isPushing || isPulling}
+                  style={{ 
+                    ...hudButtonStyle, 
+                    opacity: isPushing || isPulling ? 0.6 : 0.3,
+                    transition: 'opacity 0.3s ease'
+                  }}
+                  onMouseEnter={e => { if (!isPushing && !isPulling) e.currentTarget.style.opacity = '1'; }}
+                  onMouseLeave={e => { if (!isPushing && !isPulling) e.currentTarget.style.opacity = '0.3'; }}
+                  title={t.pushTitle}
+                >
+                  {isPushing ? '↑ Saving...' : '↑ Save'}
+                </button>
+                <button 
+                  onClick={() => handleCloudPull()} 
+                  disabled={isPushing || isPulling}
+                  style={{ 
+                    ...hudButtonStyle, 
+                    opacity: isPushing || isPulling ? 0.6 : 0.3,
+                    transition: 'opacity 0.3s ease'
+                  }}
+                  onMouseEnter={e => { if (!isPushing && !isPulling) e.currentTarget.style.opacity = '1'; }}
+                  onMouseLeave={e => { if (!isPushing && !isPulling) e.currentTarget.style.opacity = '0.3'; }}
+                  title={t.pullTitle}
+                >
+                  {isPulling ? '↓ Loading...' : '↓ Load'}
+                </button>
+                {lastSynced && (
+                  <div style={{ padding: '0 10px', fontSize: '9px', opacity: 0.3, maxWidth: '60px', lineHeight: '1.1' }}>
+                    Sync: {lastSynced.split(',')[1]}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -814,38 +885,4 @@ function App() {
     </div>
   );
 }
-const menuItemStyle: React.CSSProperties = {
-  background: 'transparent',
-  color: 'var(--btn-text)',
-  padding: '14px 24px',
-  border: 'none',
-  borderBottom: '1px solid rgba(128,128,128,0.08)',
-  fontSize: '13px',
-  fontFamily: "'Inter', 'system-ui', sans-serif",
-  fontWeight: '500',
-  textAlign: 'left',
-  cursor: 'pointer',
-  transition: 'all 0.2s ease',
-  display: 'flex',
-  alignItems: 'center',
-  width: '100%',
-  gap: '12px'
-};
-
-const hudButtonStyle: React.CSSProperties = {
-  background: 'var(--btn-bg)',
-  color: 'var(--btn-text)',
-  padding: '10px 16px',
-  border: 'none',
-  fontSize: '12px',
-  fontFamily: "'Inter', 'system-ui', sans-serif",
-  fontWeight: '600',
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  boxShadow: 'var(--btn-shadow)',
-  transition: 'opacity 0.2s',
-  borderRadius: '0'
-};
-
 export default App;

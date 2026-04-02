@@ -29,6 +29,7 @@ export const translations = {
     pushTitle: 'Push to Cloud',
     pullTitle: 'Pull from Cloud',
     connectDrive: 'Connect Google Drive',
+    unsavedChanges: 'Unsaved Changes',
 
     // Action Tooltips
     translateTooltip: 'Translate Active Sentence [T]',
@@ -108,6 +109,7 @@ export const translations = {
     pushTitle: 'クラウドに保存',
     pullTitle: 'クラウドから読込',
     connectDrive: 'Googleドライブに接続',
+    unsavedChanges: '未保存の変更',
 
     // Action Tooltips
     translateTooltip: '現在の文章を翻訳 [T]',

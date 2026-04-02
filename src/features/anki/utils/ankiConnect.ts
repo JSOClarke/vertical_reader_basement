@@ -55,6 +55,15 @@ export async function updateLastCard(metadata: BookMetadata | undefined, fieldNa
 
   const noteId = await getLastNoteId();
   
+  // 5-Minute Safety Window: Anki Note IDs are millisecond timestamps
+  const ageMs = Date.now() - noteId;
+  const FIVE_MINUTES_MS = 5 * 60 * 1000;
+
+  if (ageMs > FIVE_MINUTES_MS) {
+    const ageMins = Math.floor(ageMs / 60000);
+    throw new Error(`The last Anki card was created ${ageMins} minutes ago. Mining is only allowed within a 5-minute safety window.`);
+  }
+  
   // Add book title as a tag
   if (metadata?.title) {
     const sanitizedTitle = metadata.title.replace(/\s+/g, '_').replace(/[^\w\u3000-\u9fff]/g, '');
