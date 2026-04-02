@@ -1,0 +1,50 @@
+.navArrow {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1000;
+
+  /* Size */
+  width: 48px;
+  height: 96px;
+
+  /* Visuals */
+  background: transparent;
+  color: var(--text-color);
+  border: none;
+  cursor: pointer;
+
+  /* Typography */
+  font-size: 48px;
+  line-height: 1;
+
+  /* Fade in/out */
+  opacity: 0.12;
+  transition: opacity 0.25s ease, color 0.25s ease;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navArrow:hover:not(:disabled) {
+  opacity: 0.75;
+  color: var(--text-highlight, #fff);
+}
+
+.navArrow:active:not(:disabled) {
+  opacity: 1;
+}
+
+.navArrow:disabled {
+  opacity: 0.04;
+  cursor: default;
+}
+
+.navArrow.left {
+  left: 12px;
+}
+
+.navArrow.right {
+  right: 12px;
+}

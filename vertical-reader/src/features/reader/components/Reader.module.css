@@ -34,3 +34,7 @@
   transform: scale(1.05);
   filter: drop-shadow(var(--text-shadow));
 }
+
+.sentence.noTap {
+  cursor: default;
+}

@@ -39,6 +39,7 @@ function App() {
   const [ankiField, setAnkiField] = useState(saved.current?.ankiField ?? '');
   const [ankiModalOpen, setAnkiModalOpen] = useState(false);
 
+<<<<<<< HEAD
   // Auto-persist profile to localStorage (debounced)
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -51,6 +52,18 @@ function App() {
     }, 500);
     return () => clearTimeout(timeout);
   }, [bookData, activeIndex, metadata, ankiField]);
+=======
+  // Tap-to-select: when off, clicking a sentence won't change the active index
+  const [tapToSelect, setTapToSelect] = useState<boolean>(() => {
+    const stored = localStorage.getItem('tapToSelect');
+    return stored === null ? true : stored === 'true';
+  });
+  const toggleTapToSelect = () => setTapToSelect(prev => {
+    const next = !prev;
+    localStorage.setItem('tapToSelect', String(next));
+    return next;
+  });
+>>>>>>> 38add508159187490490d4dc4bba343aa772a65f
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('theme') as 'dark'|'light') || 'dark';
@@ -65,7 +78,7 @@ function App() {
 
   return (
     <>
-      <ReaderContainer sentences={bookData} activeIndex={activeIndex} onIndexChange={setActiveIndex} />
+      <ReaderContainer sentences={bookData} activeIndex={activeIndex} onIndexChange={setActiveIndex} tapToSelect={tapToSelect} />
       
       <BottomHUD 
         metadata={metadata} 
@@ -119,6 +132,9 @@ function App() {
             }}>
               <button onClick={() => { toggleTheme(); }} style={menuItemStyle}>
                 {theme === 'dark' ? '☀ Light Mode' : '● Dark Mode'}
+              </button>
+              <button onClick={() => { toggleTapToSelect(); }} style={menuItemStyle}>
+                {tapToSelect ? '● Tap Select' : '○ Tap Select'}
               </button>
               <button
                 onClick={() => {
@@ -236,6 +252,12 @@ function App() {
                 style={menuItemStyle}
               >
                 {theme === 'dark' ? '☀ Light Mode' : '● Dark Mode'}
+              </button>
+              <button
+                onClick={() => { toggleTapToSelect(); }}
+                style={menuItemStyle}
+              >
+                {tapToSelect ? '● Tap Select' : '○ Tap Select'}
               </button>
               <button
                 onClick={() => {
