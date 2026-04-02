@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BookInfo } from './BookInfo';
 import { ProgressBar } from './ProgressBar';
 import { TranslationPanel } from './TranslationPanel';
@@ -9,12 +9,10 @@ interface BottomHUDProps {
   sentences: string[];
   activeIndex: number;
   isMobile?: boolean;
-  showExtraUI?: boolean;
   ankiField?: string;
 }
 
-export const BottomHUD: React.FC<BottomHUDProps> = ({ metadata, sentences, activeIndex, isMobile = false, showExtraUI = true, ankiField = '' }) => {
-  const [isHovered, setIsHovered] = useState(false);
+export const BottomHUD: React.FC<BottomHUDProps> = ({ metadata, sentences, activeIndex, isMobile = false, ankiField = '' }) => {
   const activeSentence = sentences[activeIndex] || '';
 
   return (
@@ -43,13 +41,8 @@ export const BottomHUD: React.FC<BottomHUDProps> = ({ metadata, sentences, activ
           gap: isMobile ? '15px' : '40px', 
           alignItems: isMobile ? 'flex-start' : 'flex-end',
           maxWidth: isMobile ? '95vw' : '90vw',
-          opacity: isHovered || isMobile ? 1 : 0.4,
-          transition: 'opacity 0.3s ease'
         }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Desktop: BookInfo + ProgressBar together. Mobile: just BookInfo */}
         <div style={{
           display: 'flex',
           alignItems: 'center',

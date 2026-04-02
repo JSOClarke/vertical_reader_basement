@@ -115,8 +115,11 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({ activeSenten
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'background 0.3s, color 0.3s, box-shadow 0.3s',
+              opacity: 0.4,
+              transition: 'opacity 0.3s ease, background 0.3s, color 0.3s, box-shadow 0.3s',
             }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '0.4'}
             disabled={loading}
           >
             <div style={{ 
@@ -142,8 +145,11 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({ activeSenten
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'background 0.3s, color 0.3s, box-shadow 0.3s',
+              opacity: 0.4,
+              transition: 'opacity 0.3s ease, background 0.3s, color 0.3s, box-shadow 0.3s',
             }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '0.4'}
           >
             <CopyIcon />
           </button>
@@ -163,8 +169,11 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({ activeSenten
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transition: 'background 0.3s, color 0.3s, box-shadow 0.3s',
+                opacity: 0.4,
+                transition: 'opacity 0.3s ease, background 0.3s, color 0.3s, box-shadow 0.3s',
               }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '0.4'}
               disabled={ankiLoading}
             >
               <div style={{ 

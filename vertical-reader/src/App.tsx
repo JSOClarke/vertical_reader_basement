@@ -16,7 +16,6 @@ function App() {
   // Responsive Layout Overrides
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const showExtraUI = !isMobile || mobileMenuOpen;
 
   // Anki
   const [ankiField, setAnkiField] = useState('');
@@ -42,7 +41,6 @@ function App() {
         sentences={bookData} 
         activeIndex={activeIndex} 
         isMobile={isMobile}
-        showExtraUI={showExtraUI}
         ankiField={ankiField}
       />
       
