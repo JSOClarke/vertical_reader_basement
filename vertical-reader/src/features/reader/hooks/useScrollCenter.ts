@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 
 export const useScrollCenter = (activeIndex: number, totalSentences: number, centerActive: boolean = true) => {
   const sentenceRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const prevCenterActive = useRef(centerActive);
 
   // Automatically adjust the array size if totally sentences changes
   useEffect(() => {
@@ -12,6 +13,9 @@ export const useScrollCenter = (activeIndex: number, totalSentences: number, cen
   useEffect(() => {
     const activeElement = sentenceRefs.current[activeIndex];
     if (!activeElement) return;
+
+    const wasToggledOff = prevCenterActive.current === true && centerActive === false;
+    prevCenterActive.current = centerActive;
 
     if (centerActive) {
       // CENTERED MODE: Auto-scrolling to center the active element
@@ -30,7 +34,8 @@ export const useScrollCenter = (activeIndex: number, totalSentences: number, cen
 
       // In vertical-rl: 
       // Advancing to the left (next sentence): if rect.left is beyond container's left edge
-      if (rect.left < containerRect.left + buffer) {
+      // OR if we just toggled from centered to paginated mode (force a snap to the right edge)
+      if (wasToggledOff || rect.left < containerRect.left + buffer) {
         activeElement.scrollIntoView({ inline: 'start' }); // Snap to right edge (start)
       } 
       // Going back to the right (previous sentence): if rect.right is beyond container's right edge

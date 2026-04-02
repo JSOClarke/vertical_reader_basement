@@ -13,11 +13,16 @@ import type { Language } from './localization/translations';
 import type { BookMetadata, UserProfile, UserStats } from './types';
 import './App.css'; 
 
-const PROFILE_STORAGE_KEY = 'vertical-reader-profile';
+const LEGACY_STORAGE_KEY = 'vertical-reader-profile';
+const PROFILE_STORAGE_KEY = 'tateyomi-profile';
 
 function loadSavedProfile(): UserProfile | null {
   try {
-    const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+    let raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (!raw) {
+      // Fallback for legacy users
+      raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    }
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed.sentences) && typeof parsed.activeIndex === 'number') {
@@ -231,22 +236,34 @@ function App() {
         onMouseEnter={e => e.currentTarget.style.opacity = '1'}
         onMouseLeave={e => { if (!mobileMenuOpen) e.currentTarget.style.opacity = '0.3'; }}
         >
-          <button 
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            style={{
-              background: 'var(--btn-bg)',
-              color: 'var(--btn-text)',
-              padding: '10px 15px',
-              borderRadius: '0',
-              boxShadow: 'var(--btn-shadow)',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              fontFamily: 'sans-serif'
-            }}
-          >
-            {mobileMenuOpen ? '✕' : '☰'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              style={{
+                background: 'var(--btn-bg)',
+                color: 'var(--btn-text)',
+                padding: '10px 15px',
+                borderRadius: '0',
+                boxShadow: 'var(--btn-shadow)',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontFamily: 'sans-serif'
+              }}
+            >
+              {mobileMenuOpen ? '✕' : '☰'}
+            </button>
+            <img 
+              src="/favicon.png" 
+              alt="Tateyomi" 
+              style={{
+                width: '40px',
+                height: '40px',
+                boxShadow: 'var(--btn-shadow)',
+                cursor: 'default'
+              }}
+            />
+          </div>
 
           {mobileMenuOpen && (
             <div style={{
@@ -366,28 +383,39 @@ function App() {
         <div style={{
           position: 'fixed',
           top: '15px',
-          right: '15px',
+          left: '15px',
           zIndex: 2000,
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'flex-end',
+          alignItems: 'flex-start',
         }}>
-          <button 
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            style={{
-              background: 'var(--btn-bg)',
-              color: 'var(--btn-text)',
-              padding: '10px 15px',
-              borderRadius: '0',
-              boxShadow: 'var(--btn-shadow)',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              fontFamily: 'sans-serif'
-            }}
-          >
-            {mobileMenuOpen ? '✕' : '☰'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              style={{
+                background: 'var(--btn-bg)',
+                color: 'var(--btn-text)',
+                padding: '10px 15px',
+                borderRadius: '0',
+                boxShadow: 'var(--btn-shadow)',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontFamily: 'sans-serif'
+              }}
+            >
+              {mobileMenuOpen ? '✕' : '☰'}
+            </button>
+            <img 
+              src="/favicon.png" 
+              alt="Tateyomi" 
+              style={{
+                width: '36px',
+                height: '36px',
+                boxShadow: 'var(--btn-shadow)'
+              }}
+            />
+          </div>
 
           {mobileMenuOpen && (
             <div style={{

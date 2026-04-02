@@ -1,6 +1,6 @@
-# 📖 Vertical Reader
+# 📖 Tateyomi Reader (縦読み)
 
-A Japanese language learning tool built as a **vertical text reader** — designed for reading Japanese novels, manga scripts, and EPUB files in the traditional top-to-bottom, right-to-left layout. Built to complement tools like **Anki** and browser-based furigana extensions.
+A premium Japanese language learning tool built as a **vertical text reader** — designed for deep immersion in Japanese novels, manga scripts, and EPUB files. It features a traditional top-to-bottom, right-to-left layout and is optimized for use with **Anki** and browser-based lookups like **Yomitan**.
 
 ---
 
@@ -58,7 +58,7 @@ The app will be available at **http://localhost:5173** (or the next available po
 ## 📂 Loading Content
 
 ### Load an EPUB
-1. Click the **☰ menu** (top-right corner)
+1. Click the **☰ menu** (top-left corner)
 2. Select **Load EPUB**
 3. Choose any `.epub` file from your device
 4. The reader will open at sentence 1
@@ -83,6 +83,7 @@ src/
 │   ├── reader/        # Core reader UI (ReaderContainer, Sentence, ProgressBar, etc.)
 │   ├── epub/          # EPUB parsing utilities
 │   ├── anki/          # Anki settings modal and integration logic
+│   ├── stats/         # Progress and mining history tracking
 │   ├── profile/       # Profile import/export
 │   └── theme/         # Theme management
 ├── hooks/             # Reusable React hooks (e.g. useMediaQuery)
