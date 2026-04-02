@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useMediaQuery } from './hooks/useMediaQuery';
+import { useGoogleDrive } from './hooks/useGoogleDrive';
 import { ReaderContainer } from './features/reader/components/ReaderContainer';
 import { BottomHUD } from './features/reader/components/BottomHUD';
 import { AnkiSettingsModal } from './features/anki/components/AnkiSettingsModal';
@@ -104,6 +105,7 @@ function loadSavedProfile(): UserProfile | null {
 
 function App() {
   const saved = useRef(loadSavedProfile());
+  const { isConnected, isSyncing, lastSynced, connect, push, pull } = useGoogleDrive();
 
   const [bookData, setBookData] = useState<string[]>(saved.current?.sentences ?? SAMPLE_DATA);
   const [activeIndex, setActiveIndex] = useState<number>(saved.current?.activeIndex ?? 0);
@@ -360,6 +362,28 @@ function App() {
         }} style={{ display: 'none' }} />
       </label>
 
+      <MenuCategory label={t.cloudTitle || "Cloud Sync"} />
+      {!isConnected ? (
+        <button onClick={() => connect()} style={menuItemStyle}>
+          {t.connectDrive}
+        </button>
+      ) : (
+        <>
+          <button onClick={() => handleCloudPush()} style={menuItemStyle} disabled={isSyncing}>
+            {t.pushTitle}
+            {isSyncing && <span style={{ marginLeft: 'auto', fontSize: '10px', opacity: 0.5 }}>...</span>}
+          </button>
+          <button onClick={() => handleCloudPull()} style={menuItemStyle} disabled={isSyncing}>
+            {t.pullTitle}
+          </button>
+          {lastSynced && (
+            <div style={{ padding: '4px 24px 10px', fontSize: '10px', opacity: 0.4 }}>
+              Last Sync: {lastSynced}
+            </div>
+          )}
+        </>
+      )}
+
       <MenuCategory label="Integrations" />
       <button
         onClick={() => { setAnkiModalOpen(true); setMobileMenuOpen(false); }}
@@ -405,6 +429,37 @@ function App() {
       }
       return [...prev, activeIndex].sort((a, b) => a - b);
     });
+  };
+
+  const handleCloudPush = async () => {
+    const profile: UserProfile = { 
+      sentences: bookData, 
+      activeIndex, 
+      metadata, 
+      ankiField, 
+      stats, 
+      bookmarks,
+      aesthetics 
+    };
+    const success = await push(profile);
+    if (success) {
+      // success toast handled by UI status
+    }
+  };
+
+  const handleCloudPull = async () => {
+    const cloudData = await pull();
+    if (cloudData) {
+      if (confirm(t.confirmReset)) { // Reusing reset confirm for simple "overwrite local?"
+        setBookData(cloudData.sentences);
+        setActiveIndex(cloudData.activeIndex);
+        setMetadata(cloudData.metadata);
+        if (cloudData.ankiField) setAnkiField(cloudData.ankiField);
+        if (cloudData.stats) setStats(cloudData.stats);
+        if (cloudData.bookmarks) setBookmarks(cloudData.bookmarks);
+        if (cloudData.aesthetics) setAesthetics(cloudData.aesthetics);
+      }
+    }
   };
 
   useKeyboardShortcuts({

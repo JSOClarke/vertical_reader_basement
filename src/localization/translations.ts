@@ -25,6 +25,10 @@ export const translations = {
     verticalMarginLabel: 'Top/Bottom',
     horizontalMarginLabel: 'Left/Right',
     readingWidthLabel: 'Viewing Width',
+    cloudTitle: 'Cloud Sync',
+    pushTitle: 'Push to Cloud',
+    pullTitle: 'Pull from Cloud',
+    connectDrive: 'Connect Google Drive',
 
     // Action Tooltips
     translateTooltip: 'Translate Active Sentence [T]',
@@ -97,6 +101,10 @@ export const translations = {
     verticalMarginLabel: '上下余白 (Safe Zone)',
     horizontalMarginLabel: '左右余白 (Line Spacing)',
     readingWidthLabel: '表示幅',
+    cloudTitle: 'クラウド同期',
+    pushTitle: 'クラウドに保存',
+    pullTitle: 'クラウドから読込',
+    connectDrive: 'Googleドライブに接続',
 
     // Action Tooltips
     translateTooltip: '現在の文章を翻訳 [T]',
