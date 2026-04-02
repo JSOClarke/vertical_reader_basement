@@ -10,20 +10,11 @@ export const BookInfo: React.FC<BookInfoProps> = ({ metadata }) => {
 
   return (
     <div style={{
-      position: 'fixed',
-      bottom: '60px', // Places it directly above the Progress Bar
-      left: '30px',
-      zIndex: 1000,
       display: 'flex',
       alignItems: 'center',
       gap: '15px',
-      opacity: 0.4,
-      transition: 'opacity 0.3s ease',
       fontFamily: 'sans-serif'
-    }}
-    onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-    onMouseLeave={e => e.currentTarget.style.opacity = '0.4'}
-    >
+    }}>
       {metadata.coverImage && (
         <img 
           src={metadata.coverImage} 

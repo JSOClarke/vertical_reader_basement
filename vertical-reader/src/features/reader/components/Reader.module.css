@@ -6,8 +6,6 @@
   font-family: inherit;
   background-color: var(--bg-color);
   color: var(--text-color);
-  cursor: default;
-  user-select: none;
   transition: background-color 0.4s ease, color 0.4s ease;
 }
 
@@ -24,8 +22,8 @@
   font-size: 24px;
   line-height: 2;
   opacity: 0.2;
-  transition: opacity 0.4s ease, transform 0.4s ease, filter 0.4s ease;
-  cursor: pointer;
+  transition: opacity 0.4s ease, transform 0.4s ease, filter 0.4s ease, color 0.4s ease;
+  cursor: text;
   white-space: pre-wrap; /* Keeps normal wrapping if it exceeds height */
 }
 

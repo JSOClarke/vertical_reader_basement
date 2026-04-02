@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ReaderContainer } from './features/reader/components/ReaderContainer';
-import { ProgressBar } from './features/reader/components/ProgressBar';
-import { BookInfo } from './features/reader/components/BookInfo';
+import { BottomHUD } from './features/reader/components/BottomHUD';
 import { EpubUploader } from './features/epub/components/EpubUploader';
 import { ProfileManager } from './features/profile/components/ProfileManager';
 import { ThemeToggle } from './features/theme/components/ThemeToggle';
@@ -30,8 +29,7 @@ function App() {
     <>
       <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
       <ReaderContainer sentences={bookData} activeIndex={activeIndex} onIndexChange={setActiveIndex} />
-      <BookInfo metadata={metadata} />
-      <ProgressBar sentences={bookData} activeIndex={activeIndex} />
+      <BottomHUD metadata={metadata} sentences={bookData} activeIndex={activeIndex} />
       <ProfileManager 
         sentences={bookData} 
         activeIndex={activeIndex} 

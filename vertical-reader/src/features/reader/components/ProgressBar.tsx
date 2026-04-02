@@ -42,19 +42,11 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ sentences, activeIndex
       onClick={() => setMode(m => m === 'sentences' ? 'characters' : 'sentences')}
       title={`Click to switch right to ${mode === 'sentences' ? 'characters' : 'sentences'}`}
       style={{
-        position: 'fixed',
-        bottom: '30px',
-        left: '30px',
-        zIndex: 1000,
         display: 'flex',
         alignItems: 'center',
         gap: '15px',
-        opacity: 0.3,
-        transition: 'opacity 0.3s ease',
         cursor: 'pointer'
       }}
-      onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-      onMouseLeave={e => e.currentTarget.style.opacity = '0.3'}
     >
       <div 
         style={{
