@@ -7,12 +7,13 @@ import { AnkiSettingsModal } from './features/anki/components/AnkiSettingsModal'
 import { JumpToModal } from './features/reader/components/JumpToModal';
 import { StatsView } from './features/stats/components/StatsView';
 import { NotesSidebar } from './features/profile/components/NotesSidebar';
+import { LibrarySidebar } from './features/library/components/LibrarySidebar';
 import { useReaderActions } from './features/reader/hooks/useReaderActions';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { SAMPLE_DATA } from './data/mockBook';
 import { translations } from './localization/translations';
 import type { Language } from './localization/translations';
-import type { BookMetadata, UserProfile, UserStats, ReaderAesthetics } from './types';
+import type { BookMetadata, UserStats, ReaderAesthetics, UserLibrary, BookEntry } from './types';
 import './App.css'; 
 
 const menuItemStyle: React.CSSProperties = {
@@ -30,7 +31,11 @@ const menuItemStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   width: '100%',
-  gap: '12px'
+  gap: '12px',
+  boxSizing: 'border-box',
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis'
 };
 
 const hudButtonStyle: React.CSSProperties = {
@@ -108,7 +113,9 @@ const ValueStepper = ({ label, value, unit = '', onDecrease, onIncrease }: {
     padding: '10px 20px',
     fontSize: '13px',
     fontFamily: "'Inter', 'system-ui', sans-serif",
-    color: 'var(--btn-text)'
+    color: 'var(--btn-text)',
+    boxSizing: 'border-box',
+    width: '100%'
   }}>
     <span style={{ opacity: 0.8 }}>{label}</span>
     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -122,85 +129,173 @@ const ValueStepper = ({ label, value, unit = '', onDecrease, onIncrease }: {
 const LEGACY_STORAGE_KEY = 'vertical-reader-profile';
 const PROFILE_STORAGE_KEY = 'tateyomi-profile';
 
-function loadSavedProfile(): UserProfile | null {
+const generateBookId = (metadata?: BookMetadata, sentenceCount: number = 0) => {
+  const title = metadata?.title || 'Unknown';
+  const author = metadata?.author || 'Unknown';
+  return `${title}-${author}-${sentenceCount}`.replace(/\s+/g, '-').toLowerCase();
+};
+
+function loadSavedLibrary(): UserLibrary {
+  const defaultLibrary: UserLibrary = {
+    books: [],
+    settings: {
+      ankiField: '',
+      stats: { totalCharactersRead: 0, readingDays: [], miningHistory: [] },
+      aesthetics: { fontSize: 28, verticalMargin: 10, horizontalMargin: 40, readingWidth: 100 },
+      language: (localStorage.getItem('language') as any) || 'en',
+      theme: (localStorage.getItem('theme') as any) || 'dark',
+      tapToSelect: localStorage.getItem('tapToSelect') !== 'false',
+      showArrows: localStorage.getItem('showArrows') !== 'false',
+      centerActive: localStorage.getItem('centerActive') !== 'false',
+    }
+  };
+
   try {
-    let raw = localStorage.getItem(PROFILE_STORAGE_KEY);
-    if (!raw) {
-      // Fallback for legacy users
-      raw = localStorage.getItem(LEGACY_STORAGE_KEY);
-    }
-    if (!raw) return null;
+    const raw = localStorage.getItem(PROFILE_STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!raw) return defaultLibrary;
+
     const parsed = JSON.parse(raw);
+
+    // Migration logic
     if (Array.isArray(parsed.sentences) && typeof parsed.activeIndex === 'number') {
-      return parsed as UserProfile;
+      const legacyBook: BookEntry = {
+        id: generateBookId(parsed.metadata, parsed.sentences.length),
+        sentences: parsed.sentences,
+        metadata: parsed.metadata || {},
+        progress: {
+          activeIndex: parsed.activeIndex,
+          bookmarks: parsed.bookmarks || [],
+          notes: parsed.notes || '',
+          lastRead: Date.now(),
+        }
+      };
+
+      return {
+        books: [legacyBook],
+        activeBookId: legacyBook.id,
+        settings: {
+          ankiField: parsed.ankiField || '',
+          stats: parsed.stats || defaultLibrary.settings.stats,
+          aesthetics: parsed.aesthetics || defaultLibrary.settings.aesthetics,
+          language: defaultLibrary.settings.language,
+          theme: defaultLibrary.settings.theme,
+          tapToSelect: defaultLibrary.settings.tapToSelect,
+          showArrows: defaultLibrary.settings.showArrows,
+          centerActive: defaultLibrary.settings.centerActive,
+        }
+      };
     }
-  } catch {
-    // corrupted data — ignore
+
+    if (parsed.books && Array.isArray(parsed.books)) {
+      return parsed as UserLibrary;
+    }
+  } catch (e) {
+    console.error("Failed to load library:", e);
   }
-  return null;
+  return defaultLibrary;
 }
 
 function App() {
-  const saved = useRef(loadSavedProfile());
+  const [library, setLibrary] = useState<UserLibrary>(() => loadSavedLibrary());
   const { isConnected, isPushing, isPulling, lastSynced, connect, push, pull } = useGoogleDrive();
 
+  const activeBook = useMemo(() => {
+    return library.books.find(b => b.id === library.activeBookId) || null;
+  }, [library.books, library.activeBookId]);
+
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [bookData, setBookData] = useState<string[]>(saved.current?.sentences ?? SAMPLE_DATA);
-  const [activeIndex, setActiveIndex] = useState<number>(saved.current?.activeIndex ?? 0);
-  const [metadata, setMetadata] = useState<BookMetadata | undefined>(saved.current?.metadata);
+  
+  const [activeIndex, setActiveIndex] = useState<number>(activeBook?.progress.activeIndex ?? 0);
+  const [bookData, setBookData] = useState<string[]>(activeBook?.sentences ?? SAMPLE_DATA);
+  const [metadata, setMetadata] = useState<BookMetadata>(activeBook?.metadata ?? {});
+  const [bookmarks, setBookmarks] = useState<number[]>(activeBook?.progress.bookmarks ?? []);
+  const [notes, setNotes] = useState<string>(activeBook?.progress.notes ?? '');
+
+  const [stats, setStats] = useState<UserStats>(library.settings.stats);
+  const [ankiField, setAnkiField] = useState(library.settings.ankiField);
+  const [aesthetics, setAesthetics] = useState<ReaderAesthetics>(library.settings.aesthetics);
+  const [language, setLanguage] = useState<Language>(library.settings.language);
+  const [theme, setTheme] = useState<'dark' | 'light'>(library.settings.theme);
+  const [tapToSelect, setTapToSelect] = useState<boolean>(library.settings.tapToSelect);
+  const [showArrows, setShowArrows] = useState<boolean>(library.settings.showArrows);
+  const [centerActive, setCenterActive] = useState<boolean>(library.settings.centerActive);
+
   const [error, setError] = useState<string | null>(null);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [currentView, setCurrentView] = useState<'reader' | 'stats'>('reader');
+  const [ankiModalOpen, setAnkiModalOpen] = useState(false);
+  const [isJumpModalOpen, setJumpModalOpen] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const prevIndexRef = useRef<number>(activeIndex);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const readerActions = useReaderActions(() => handleToggleBookmark());
 
-  const [bookmarks, setBookmarks] = useState<number[]>(saved.current?.bookmarks ?? []);
+  useEffect(() => {
+    if (activeBook) {
+      setActiveIndex(activeBook.progress.activeIndex);
+      setBookData(activeBook.sentences);
+      setMetadata(activeBook.metadata);
+      setBookmarks(activeBook.progress.bookmarks);
+      setNotes(activeBook.progress.notes);
+    } else if (library.books.length === 0) {
+      setBookData(SAMPLE_DATA);
+      setActiveIndex(0);
+      setMetadata({});
+      setBookmarks([]);
+      setNotes('');
+    }
+  }, [library.activeBookId]);
 
-  // Stats
-  const [stats, setStats] = useState<UserStats>({
-    totalCharactersRead: saved.current?.stats?.totalCharactersRead ?? 0,
-    readingDays: saved.current?.stats?.readingDays ?? [],
-    miningHistory: saved.current?.stats?.miningHistory ?? [],
-  });
-  const [currentView, setCurrentView] = useState<'reader' | 'stats'>('reader');
-  const prevIndexRef = useRef<number>(activeIndex);
+  useEffect(() => {
+    if (!library.activeBookId) return;
+    
+    setLibrary((prev: UserLibrary) => {
+      const idx = prev.books.findIndex(b => b.id === prev.activeBookId);
+      if (idx === -1) return prev;
+      
+      const updatedBooks = [...prev.books];
+      updatedBooks[idx] = {
+        ...updatedBooks[idx],
+        sentences: bookData,
+        metadata,
+        progress: {
+          ...updatedBooks[idx].progress,
+          activeIndex,
+          bookmarks,
+          notes,
+          lastRead: Date.now()
+        }
+      };
+      
+      return { ...prev, books: updatedBooks };
+    });
+  }, [activeIndex, bookmarks, notes, bookData, metadata]);
 
-  // Responsive Layout Overrides
-  const isMobile = useMediaQuery('(max-width: 768px)');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // Anki
-  const [ankiField, setAnkiField] = useState(saved.current?.ankiField ?? '');
-  const [ankiModalOpen, setAnkiModalOpen] = useState(false);
-  const [isJumpModalOpen, setJumpModalOpen] = useState(false);
-
-  const [aesthetics, setAesthetics] = useState<ReaderAesthetics>({
-    fontSize: 28,
-    verticalMargin: 10,
-    horizontalMargin: 40,
-    readingWidth: 100,
-    ...saved.current?.aesthetics
-  });
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  
-  const [notes, setNotes] = useState<string>(saved.current?.notes ?? '');
-  const [isNotesOpen, setIsNotesOpen] = useState(false);
+  useEffect(() => {
+    setLibrary((prev: UserLibrary) => ({
+      ...prev,
+      settings: {
+        ankiField,
+        stats,
+        aesthetics,
+        language,
+        theme,
+        tapToSelect,
+        showArrows,
+        centerActive
+      }
+    }));
+  }, [ankiField, stats, aesthetics, language, theme, tapToSelect, showArrows, centerActive]);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
   }, []);
-
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (mobileMenuOpen && menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMobileMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [mobileMenuOpen]);
 
   const minedSentencesSet = useMemo(() => {
     const currentTitle = metadata?.title || 'Unknown Book';
@@ -215,11 +310,6 @@ function App() {
     return set;
   }, [stats.miningHistory, metadata?.title]);
 
-  // Language
-  const [language, setLanguage] = useState<Language>(() => {
-    return (localStorage.getItem('language') as Language) || 'en';
-  });
-
   const toggleLanguage = () => setLanguage(prev => {
     const next = prev === 'en' ? 'ja' : 'en';
     localStorage.setItem('language', next);
@@ -228,46 +318,31 @@ function App() {
 
   const t = translations[language];
 
-  // Auto-persist profile to localStorage (debounced)
   useEffect(() => {
     const timeout = setTimeout(() => {
       try {
-        const profile: UserProfile = { 
-          sentences: bookData, 
-          activeIndex, 
-          metadata, 
-          ankiField, 
-          stats, 
-          bookmarks,
-          aesthetics,
-          notes
-        };
-        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(library));
         if (isConnected) setHasUnsavedChanges(true);
       } catch {
-        // localStorage full or unavailable — silently ignore
+        // storage error
       }
-    }, 500);
+    }, 1000);
     return () => clearTimeout(timeout);
-  }, [bookData, activeIndex, metadata, ankiField, stats, bookmarks, aesthetics, isConnected]);
+  }, [library, isConnected]);
 
-  // Handle Browser Exit Confirmation
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges && isConnected) {
         e.preventDefault();
-        e.returnValue = ''; // Trigger standard browser prompt
+        e.returnValue = '';
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges, isConnected]);
 
-  // Track reading stats (characters and days)
   useEffect(() => {
     const dateStr = new Date().toISOString().split('T')[0];
-    
-    // Only track if we progressed forward to avoid double-counting or backward jumps
     if (activeIndex > prevIndexRef.current) {
       const addedChars = bookData
         .slice(prevIndexRef.current, activeIndex)
@@ -285,7 +360,6 @@ function App() {
         };
       });
     } else {
-      // Even if we didn't progress, we might need to log today as a reading day
       setStats(prev => {
         if (!prev.readingDays.includes(dateStr)) {
           return { ...prev, readingDays: [...prev.readingDays, dateStr] };
@@ -297,6 +371,108 @@ function App() {
     prevIndexRef.current = activeIndex;
     readerActions.clearTranslation();
   }, [activeIndex, bookData, readerActions.clearTranslation]);
+
+  const toggleTapToSelect = () => setTapToSelect(prev => {
+    const next = !prev;
+    localStorage.setItem('tapToSelect', String(next));
+    return next;
+  });
+
+  const toggleArrows = () => setShowArrows(prev => {
+    const next = !prev;
+    localStorage.setItem('showArrows', String(next));
+    return next;
+  });
+
+  const toggleCenterActive = () => setCenterActive(prev => {
+    const next = !prev;
+    localStorage.setItem('centerActive', String(next));
+    return next;
+  });
+
+  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const handleAnkiMine = (sentence: string) => {
+    setStats(prev => ({
+      ...prev,
+      miningHistory: [
+        {
+          bookTitle: metadata?.title || t.unknownBook,
+          sentence,
+          timestamp: Date.now(),
+        },
+        ...(prev.miningHistory || []),
+      ].slice(0, 100),
+    }));
+    setHasUnsavedChanges(true);
+  };
+
+  const handleToggleBookmark = () => {
+    setBookmarks(prev => {
+      if (prev.includes(activeIndex)) {
+        return prev.filter(i => i !== activeIndex);
+      }
+      return [...prev, activeIndex].sort((a, b) => a - b);
+    });
+    setHasUnsavedChanges(true);
+  };
+
+  const handleCloudPush = async () => {
+    const success = await push(library);
+    if (success) {
+      showToast(t.cloudPushSuccess || "Sync Successful!", 'success');
+      setHasUnsavedChanges(false);
+    } else {
+      showToast(t.cloudSyncError, 'error');
+    }
+  };
+
+  const handleCloudPull = async () => {
+    const cloudLibrary = await pull() as any;
+    if (cloudLibrary) {
+      if (confirm(t.confirmReset)) {
+        setLibrary(cloudLibrary);
+        showToast(t.cloudPullSuccess, 'success');
+      }
+    } else {
+      showToast(t.cloudSyncError, 'error');
+    }
+  };
+
+  useKeyboardShortcuts({
+    'T': () => readerActions.translate(bookData[activeIndex]),
+    'C': () => readerActions.copy(bookData[activeIndex], t),
+    'A': () => readerActions.mineAnki(bookData[activeIndex], metadata, ankiField, handleAnkiMine, t),
+    'B': () => handleToggleBookmark(),
+  });
+
+  const handleActiveIndexChange = (index: number) => {
+    setActiveIndex(index);
+    if (isConnected) setHasUnsavedChanges(true);
+  };
+
+  const handleJumpToIndex = (index: number) => {
+    handleActiveIndexChange(index);
+    setJumpModalOpen(false);
+  };
+
+  const handleDeleteBook = (id: string) => {
+    if (!window.confirm(t.confirmDeleteBook)) return;
+    
+    setLibrary((prev: UserLibrary) => {
+      const newBooks = prev.books.filter(b => b.id !== id);
+      let newActiveId = prev.activeBookId;
+      if (newActiveId === id) {
+        newActiveId = newBooks.length > 0 ? newBooks[0].id : undefined;
+      }
+      return { ...prev, books: newBooks, activeBookId: newActiveId };
+    });
+  };
 
   const renderMenuContent = () => (
     <>
@@ -313,29 +489,29 @@ function App() {
         label={t.fontSizeLabel || "Font Size"} 
         value={aesthetics.fontSize} 
         unit="px"
-        onDecrease={() => { setAesthetics(prev => ({ ...prev, fontSize: Math.max(12, prev.fontSize - 2) })); setHasUnsavedChanges(true); }}
-        onIncrease={() => { setAesthetics(prev => ({ ...prev, fontSize: Math.min(48, prev.fontSize + 2) })); setHasUnsavedChanges(true); }}
+        onDecrease={() => setAesthetics(prev => ({ ...prev, fontSize: Math.max(12, prev.fontSize - 2) }))}
+        onIncrease={() => setAesthetics(prev => ({ ...prev, fontSize: Math.min(48, prev.fontSize + 2) }))}
       />
       <ValueStepper 
         label={t.verticalMarginLabel || "Top/Bottom"} 
         value={aesthetics.verticalMargin} 
         unit="vh"
-        onDecrease={() => { setAesthetics(prev => ({ ...prev, verticalMargin: Math.max(0, prev.verticalMargin - 1) })); setHasUnsavedChanges(true); }}
-        onIncrease={() => { setAesthetics(prev => ({ ...prev, verticalMargin: Math.min(30, prev.verticalMargin + 1) })); setHasUnsavedChanges(true); }}
+        onDecrease={() => setAesthetics(prev => ({ ...prev, verticalMargin: Math.max(0, prev.verticalMargin - 1) }))}
+        onIncrease={() => setAesthetics(prev => ({ ...prev, verticalMargin: Math.min(30, prev.verticalMargin + 1) }))}
       />
       <ValueStepper 
         label={t.horizontalMarginLabel || "Left/Right"} 
         value={aesthetics.horizontalMargin} 
         unit="px"
-        onDecrease={() => { setAesthetics(prev => ({ ...prev, horizontalMargin: Math.max(0, prev.horizontalMargin - 5) })); setHasUnsavedChanges(true); }}
-        onIncrease={() => { setAesthetics(prev => ({ ...prev, horizontalMargin: Math.min(100, prev.horizontalMargin + 5) })); setHasUnsavedChanges(true); }}
+        onDecrease={() => setAesthetics(prev => ({ ...prev, horizontalMargin: Math.max(0, prev.horizontalMargin - 5) }))}
+        onIncrease={() => setAesthetics(prev => ({ ...prev, horizontalMargin: Math.min(100, prev.horizontalMargin + 5) }))}
       />
       <ValueStepper 
         label={t.readingWidthLabel || "Viewing Width"} 
         value={aesthetics.readingWidth} 
         unit="%"
-        onDecrease={() => { setAesthetics(prev => ({ ...prev, readingWidth: Math.max(30, prev.readingWidth - 5) })); setHasUnsavedChanges(true); }}
-        onIncrease={() => { setAesthetics(prev => ({ ...prev, readingWidth: Math.min(100, prev.readingWidth + 5) })); setHasUnsavedChanges(true); }}
+        onDecrease={() => setAesthetics(prev => ({ ...prev, readingWidth: Math.max(30, prev.readingWidth - 5) }))}
+        onIncrease={() => setAesthetics(prev => ({ ...prev, readingWidth: Math.min(100, prev.readingWidth + 5) }))}
       />
       
       <MenuCategory label={t.readingSettings || "Reading"} />
@@ -356,51 +532,6 @@ function App() {
       <button onClick={() => { setCurrentView('stats'); setMobileMenuOpen(false); }} style={menuItemStyle}>
         {t.viewStats}
       </button>
-      <button
-        onClick={() => {
-          if (bookData.length === 0) { alert(t.noDataLoaded); return; }
-          const profile: UserProfile = { sentences: bookData, activeIndex, metadata, ankiField, stats, bookmarks, aesthetics };
-          const blob = new Blob([JSON.stringify(profile)], { type: "application/json" });
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `reader-profile-${new Date().toISOString().split('T')[0]}.json`;
-          link.click();
-          URL.revokeObjectURL(url);
-          setMobileMenuOpen(false);
-          showToast(t.copiedToast, 'success'); // Reusing "copied" for simple export success
-        }}
-        style={menuItemStyle}
-      >
-        {t.exportProfile}
-      </button>
-      
-      <label style={{ ...menuItemStyle, cursor: 'pointer' }}>
-        {t.importProfile}
-        <input type="file" accept=".json" onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (!file) return;
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            try {
-              const json = JSON.parse(ev.target?.result as string);
-              if (Array.isArray(json.sentences) && typeof json.activeIndex === 'number') {
-                setBookData(json.sentences);
-                setActiveIndex(json.activeIndex);
-                setMetadata(json.metadata);
-                if (json.bookmarks) setBookmarks(json.bookmarks);
-                if (json.aesthetics) setAesthetics(json.aesthetics);
-                if (json.notes) setNotes(json.notes);
-                setError(null);
-                showToast(t.cloudPullSuccess, 'success'); // Reusing pull success for import
-              } else { showToast(t.invalidProfile, 'error'); }
-            } catch { showToast(t.failedParseProfile, 'error'); }
-          };
-          reader.readAsText(file);
-          e.target.value = '';
-          setMobileMenuOpen(false);
-        }} style={{ display: 'none' }} />
-      </label>
 
       <label style={{ ...menuItemStyle, cursor: 'pointer' }}>
         {t.loadEpub}
@@ -413,9 +544,28 @@ function App() {
             if (data.sentences.length === 0) {
               setError(t.noTextInEpub);
             } else {
-              setBookData(data.sentences);
-              setMetadata(data.metadata);
-              setActiveIndex(0);
+              const bookId = generateBookId(data.metadata, data.sentences.length);
+              setLibrary((prev: UserLibrary) => {
+                if (prev.books.some(b => b.id === bookId)) {
+                  return { ...prev, activeBookId: bookId };
+                }
+                const newBook: BookEntry = {
+                  id: bookId,
+                  sentences: data.sentences,
+                  metadata: data.metadata,
+                  progress: {
+                    activeIndex: 0,
+                    bookmarks: [],
+                    notes: '',
+                    lastRead: Date.now()
+                  }
+                };
+                return {
+                  ...prev,
+                  books: [newBook, ...prev.books],
+                  activeBookId: bookId
+                };
+              });
               setError(null);
             }
           } catch (err: any) {
@@ -427,10 +577,7 @@ function App() {
       </label>
 
       <MenuCategory label="Integrations" />
-      <button
-        onClick={() => { setAnkiModalOpen(true); setMobileMenuOpen(false); }}
-        style={menuItemStyle}
-      >
+      <button onClick={() => { setAnkiModalOpen(true); setMobileMenuOpen(false); }} style={menuItemStyle}>
         {t.ankiSettings}
       </button>
 
@@ -450,134 +597,8 @@ function App() {
     </>
   );
 
-  const handleAnkiMine = (sentence: string) => {
-    setStats(prev => ({
-      ...prev,
-      miningHistory: [
-        {
-          bookTitle: metadata?.title || t.unknownBook,
-          sentence,
-          timestamp: Date.now(),
-        },
-        ...(prev.miningHistory || []),
-      ].slice(0, 100), // Cap at 100 for minimalist performance
-    }));
-    setHasUnsavedChanges(true);
-  };
-
-  const handleToggleBookmark = () => {
-    setBookmarks(prev => {
-      if (prev.includes(activeIndex)) {
-        return prev.filter(i => i !== activeIndex);
-      }
-      return [...prev, activeIndex].sort((a, b) => a - b);
-    });
-    setHasUnsavedChanges(true);
-  };
-
-  const handleCloudPush = async () => {
-    const profile: UserProfile = { 
-      sentences: bookData, 
-      activeIndex, 
-      metadata, 
-      ankiField, 
-      stats, 
-      bookmarks,
-      aesthetics,
-      notes
-    };
-    const success = await push(profile);
-    if (success) {
-      showToast(t.cloudPushSuccess || "Sync Successful!", 'success');
-      setHasUnsavedChanges(false);
-    } else {
-      showToast(t.cloudSyncError, 'error');
-    }
-  };
-
-  const handleCloudPull = async () => {
-    const cloudData = await pull();
-    if (cloudData) {
-      if (confirm(t.confirmReset)) { // Reusing reset confirm for simple "overwrite local?"
-        setBookData(cloudData.sentences);
-        setActiveIndex(cloudData.activeIndex);
-        setMetadata(cloudData.metadata);
-        if (cloudData.ankiField) setAnkiField(cloudData.ankiField);
-        if (cloudData.stats) setStats(cloudData.stats);
-        if (cloudData.bookmarks) setBookmarks(cloudData.bookmarks);
-        if (cloudData.aesthetics) setAesthetics(cloudData.aesthetics);
-        if (cloudData.notes) setNotes(cloudData.notes);
-        showToast(t.cloudPullSuccess, 'success');
-      }
-    } else {
-      showToast(t.cloudSyncError, 'error');
-    }
-  };
-
-  useKeyboardShortcuts({
-    'T': () => readerActions.translate(bookData[activeIndex]),
-    'C': () => readerActions.copy(bookData[activeIndex], t),
-    'A': () => readerActions.mineAnki(bookData[activeIndex], metadata, ankiField, handleAnkiMine, t),
-    'B': () => handleToggleBookmark(),
-  });
-
-  const handleActiveIndexChange = (index: number) => {
-    setActiveIndex(index);
-    if (isConnected) setHasUnsavedChanges(true); // Track progress as "Unsaved Cloud Change"
-  };
-
-  const handleJumpToIndex = (index: number) => {
-    handleActiveIndexChange(index);
-    setJumpModalOpen(false);
-  };
-
-  // Tap-to-select: when off, clicking a sentence won't change the active index
-  const [tapToSelect, setTapToSelect] = useState<boolean>(() => {
-    const stored = localStorage.getItem('tapToSelect');
-    return stored === null ? true : stored === 'true';
-  });
-  const toggleTapToSelect = () => setTapToSelect(prev => {
-    const next = !prev;
-    localStorage.setItem('tapToSelect', String(next));
-    return next;
-  });
-
-  // Show-Arrows: toggle visibility of the left/right navigation arrows
-  const [showArrows, setShowArrows] = useState<boolean>(() => {
-    const stored = localStorage.getItem('showArrows');
-    return stored === null ? true : stored === 'true';
-  });
-  const toggleArrows = () => setShowArrows(prev => {
-    const next = !prev;
-    localStorage.setItem('showArrows', String(next));
-    return next;
-  });
-
-  // Center-Active: toggle automatic scrolling to the active sentence
-  const [centerActive, setCenterActive] = useState<boolean>(() => {
-    const stored = localStorage.getItem('centerActive');
-    return stored === null ? true : stored === 'true';
-  });
-  const toggleCenterActive = () => setCenterActive(prev => {
-    const next = !prev;
-    localStorage.setItem('centerActive', String(next));
-    return next;
-  });
-
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    return (localStorage.getItem('theme') as 'dark'|'light') || 'dark';
-  });
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
-
   return (
     <div style={{
-      // @ts-ignore - CSS variables
       '--reader-font-size': `${aesthetics.fontSize}px`,
       '--reader-vertical-margin': `${aesthetics.verticalMargin}vh`,
       '--reader-horizontal-margin': `${aesthetics.horizontalMargin}px`,
@@ -601,7 +622,6 @@ function App() {
             bookmarks={bookmarks}
             onOpenJump={() => setJumpModalOpen(true)}
           />
-          
           <BottomHUD 
             metadata={metadata} 
             sentences={bookData} 
@@ -613,6 +633,7 @@ function App() {
             isBookmarked={bookmarks.includes(activeIndex)}
             readerActions={readerActions}
             t={t}
+            onOpenLibrary={() => setIsLibraryOpen(true)}
           />
         </>
       ) : (
@@ -650,23 +671,12 @@ function App() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transition: 'background 0.3s',
               }}
             >
               <MenuIcon open={mobileMenuOpen} />
             </button>
-            <img 
-              src="/favicon.png" 
-              alt="Tateyomi" 
-              style={{
-                width: '40px',
-                height: '40px',
-                boxShadow: 'var(--btn-shadow)',
-                cursor: 'default'
-              }}
-            />
+            <img src="/favicon.png" alt="Tateyomi" style={{ width: '40px', height: '40px' }} />
           </div>
-
           {mobileMenuOpen && (
             <div style={{
               marginTop: '8px',
@@ -678,8 +688,6 @@ function App() {
               maxHeight: 'calc(100vh - 120px)',
               overflowY: 'auto',
               overflowX: 'hidden',
-              WebkitOverflowScrolling: 'touch',
-              animation: 'fadeSlideDown 0.3s ease-out forwards',
               border: '1px solid rgba(128,128,128,0.1)'
             }}>
               {renderMenuContent()}
@@ -688,92 +696,7 @@ function App() {
         </div>
       )}
       
-      {/* Cloud Sync Desktop HUD */}
-      {!isMobile && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: '30px',
-            right: '30px',
-            zIndex: 2000,
-            display: 'flex',
-            gap: '10px',
-            alignItems: 'center'
-          }}
-        >
-          {!isConnected ? (
-            <button 
-              onClick={() => connect()} 
-              style={{ 
-                ...hudButtonStyle, 
-                background: 'var(--btn-bg)', 
-                color: 'var(--btn-text)',
-                opacity: 0.3,
-                transition: 'opacity 0.3s ease'
-              }}
-              onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-              onMouseLeave={e => e.currentTarget.style.opacity = '0.3'}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
-                <path d="M17.5 19c.6 0 1.1-.4 1.3-.9.4-1 .3-2.1-.3-3-.6-.9-1.5-1.5-2.5-1.5-.1 0-.3 0-.4.1-.4-2-2.1-3.6-4.1-3.6-1.5 0-2.8.9-3.5 2.1-.3-.1-.6-.1-.9-.1-1.6 0-2.9 1.3-2.9 2.9 0 .2 0 .4.1.5-1.1.4-1.9 1.5-1.9 2.8 0 1.5 1.1 2.7 2.6 2.7h12.5z" />
-              </svg>
-              {t.connectDrive || "Connect Drive"}
-            </button>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-              {hasUnsavedChanges && !isPushing && (
-                <div style={{ 
-                  fontSize: '9px', 
-                  letterSpacing: '0.15em', 
-                  fontWeight: '300', 
-                  color: '#f59e0b', 
-                  opacity: 0.8,
-                  textTransform: 'uppercase',
-                  marginBottom: '-2px'
-                }}>
-                  {t.unsavedChanges || "Unsaved"}
-                </div>
-              )}
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <button 
-                  onClick={() => handleCloudPush()} 
-                  disabled={isPushing || isPulling}
-                  style={{ 
-                    ...hudButtonStyle, 
-                    opacity: isPushing || isPulling ? 0.6 : 0.3,
-                    transition: 'opacity 0.3s ease'
-                  }}
-                  onMouseEnter={e => { if (!isPushing && !isPulling) e.currentTarget.style.opacity = '1'; }}
-                  onMouseLeave={e => { if (!isPushing && !isPulling) e.currentTarget.style.opacity = '0.3'; }}
-                  title={t.pushTitle}
-                >
-                  {isPushing ? '↑ Saving...' : '↑ Save'}
-                </button>
-                <button 
-                  onClick={() => handleCloudPull()} 
-                  disabled={isPushing || isPulling}
-                  style={{ 
-                    ...hudButtonStyle, 
-                    opacity: isPushing || isPulling ? 0.6 : 0.3,
-                    transition: 'opacity 0.3s ease'
-                  }}
-                  onMouseEnter={e => { if (!isPushing && !isPulling) e.currentTarget.style.opacity = '1'; }}
-                  onMouseLeave={e => { if (!isPushing && !isPulling) e.currentTarget.style.opacity = '0.3'; }}
-                  title={t.pullTitle}
-                >
-                  {isPulling ? '↓ Loading...' : '↓ Load'}
-                </button>
-                {lastSynced && (
-                  <div style={{ padding: '0 10px', fontSize: '9px', opacity: 0.3, maxWidth: '60px', lineHeight: '1.1' }}>
-                    Sync: {lastSynced.split(',')[1]}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
+      {/* Mobile Menu Toggle */}
       {isMobile && (
         <div 
           ref={menuRef}
@@ -784,29 +707,22 @@ function App() {
             zIndex: 2000,
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'flex-start',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button 
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              style={{
-                background: 'var(--btn-bg)',
-                color: 'var(--btn-text)',
-                padding: '12px',
-                borderRadius: '0',
-                boxShadow: 'var(--btn-shadow)',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <MenuIcon open={mobileMenuOpen} />
-            </button>
-          </div>
-
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{
+              ...hudButtonStyle,
+              padding: '12px',
+              borderRadius: '0',
+              width: '44px',
+              height: '44px',
+              justifyContent: 'center'
+            }}
+          >
+            <MenuIcon open={mobileMenuOpen} />
+          </button>
+          
           {mobileMenuOpen && (
             <div style={{
               marginTop: '8px',
@@ -815,11 +731,10 @@ function App() {
               display: 'flex',
               flexDirection: 'column',
               minWidth: '220px',
-              maxHeight: 'calc(100vh - 120px)',
+              maxWidth: 'calc(100vw - 30px)',
+              maxHeight: 'calc(100vh - 80px)',
               overflowY: 'auto',
               overflowX: 'hidden',
-              WebkitOverflowScrolling: 'touch',
-              animation: 'fadeSlideDown 0.3s ease-out forwards',
               border: '1px solid rgba(128,128,128,0.1)'
             }}>
               {renderMenuContent()}
@@ -828,29 +743,52 @@ function App() {
         </div>
       )}
 
+      {!isMobile && (
+        <div style={{
+          position: 'fixed',
+          top: '30px',
+          right: '30px',
+          zIndex: 2000,
+          display: 'flex',
+          gap: '10px',
+          alignItems: 'center'
+        }}>
+          {!isConnected ? (
+            <button onClick={() => connect()} style={{ ...hudButtonStyle, opacity: 0.3 }}>
+              {t.connectDrive}
+            </button>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+              {hasUnsavedChanges && !isPushing && (
+                <div style={{ fontSize: '9px', color: '#f59e0b', textTransform: 'uppercase' }}>
+                  {t.unsavedChanges}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={() => handleCloudPush()} disabled={isPushing || isPulling} style={{ ...hudButtonStyle, opacity: 0.3 }}>
+                  {isPushing ? 'Saving...' : 'Save'}
+                </button>
+                <button onClick={() => handleCloudPull()} disabled={isPushing || isPulling} style={{ ...hudButtonStyle, opacity: 0.3 }}>
+                  {isPulling ? 'Loading...' : 'Load'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {ankiModalOpen && (
-        <AnkiSettingsModal
-          ankiField={ankiField}
-          onSave={setAnkiField}
-          onClose={() => setAnkiModalOpen(false)}
-          t={t}
-        />
+        <AnkiSettingsModal ankiField={ankiField} onSave={setAnkiField} onClose={() => setAnkiModalOpen(false)} t={t} />
       )}
 
       {error && (
-        <div style={{ position: 'fixed', top: 20, left: 20, color: '#ff4c4c', zIndex: 1000, background: '#121212', padding: 10, borderRadius: 0 }}>
+        <div style={{ position: 'fixed', top: 20, left: 20, color: '#ff4c4c', zIndex: 1000 }}>
           {error}
         </div>
       )}
 
       {isJumpModalOpen && (
-        <JumpToModal
-          currentIndex={activeIndex}
-          totalSentences={bookData.length}
-          onJump={handleJumpToIndex}
-          onClose={() => setJumpModalOpen(false)}
-          t={t}
-        />
+        <JumpToModal currentIndex={activeIndex} totalSentences={bookData.length} onJump={handleJumpToIndex} onClose={() => setJumpModalOpen(false)} t={t} />
       )}
 
       {toast && (
@@ -861,41 +799,25 @@ function App() {
           padding: '16px 24px',
           background: 'var(--btn-bg)',
           color: 'var(--btn-text)',
-          fontFamily: "'Inter', 'system-ui', sans-serif",
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-          borderRadius: '0',
-          borderLeft: `4px solid ${toast.type === 'success' ? '#10b981' : '#ef4444'}`,
-          fontSize: '13px',
-          fontWeight: '600',
           zIndex: 9999,
-          animation: 'fadeSlideDown 0.4s ease-out forwards',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          maxWidth: '80vw'
+          borderLeft: `4px solid ${toast.type === 'success' ? '#10b981' : '#ef4444'}`,
         }}>
-          {toast.type === 'success' ? (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          ) : (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          )}
           {toast.message}
         </div>
       )}
 
-      {/* Notes Sidebar and Toggle */}
-      <NotesSidebar 
-        isOpen={isNotesOpen} 
-        onClose={() => setIsNotesOpen(false)} 
-        notes={notes} 
-        onNotesChange={setNotes}
+      {/* Library Sidebar */}
+      <LibrarySidebar 
+        isOpen={isLibraryOpen}
+        onClose={() => setIsLibraryOpen(false)}
+        books={library.books}
+        activeBookId={library.activeBookId}
+        onSelectBook={(id) => setLibrary(prev => ({ ...prev, activeBookId: id }))}
+        onDeleteBook={handleDeleteBook}
         t={t}
       />
+
+      <NotesSidebar isOpen={isNotesOpen} onClose={() => setIsNotesOpen(false)} notes={notes} onNotesChange={setNotes} t={t} />
 
       <button
         onClick={() => setIsNotesOpen(true)}
@@ -909,24 +831,8 @@ function App() {
           width: '50px',
           height: '50px',
           borderRadius: '0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
-          border: '1px solid rgba(128,128,128,0.2)',
           cursor: 'pointer',
-          transition: 'transform 0.2s, background 0.2s',
-          opacity: 0.8,
         }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.1)';
-          e.currentTarget.style.opacity = '1';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1)';
-          e.currentTarget.style.opacity = '0.8';
-        }}
-        aria-label="Open notes"
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -936,4 +842,5 @@ function App() {
     </div>
   );
 }
+
 export default App;

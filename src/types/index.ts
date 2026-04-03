@@ -1,3 +1,5 @@
+import type { Language } from "../localization/translations";
+
 export interface SentenceProps {
   text: string;
   isActive: boolean;
@@ -44,6 +46,37 @@ export interface ReaderAesthetics {
   readingWidth: number;   // % of viewport (e.g., 50-100)
 }
 
+// New Multi-Book Structure
+export interface BookEntry {
+  id: string; // Hash of title + author + sentence count
+  sentences: string[];
+  metadata: BookMetadata;
+  progress: {
+    activeIndex: number;
+    bookmarks: number[];
+    notes: string;
+    lastRead: number; // timestamp
+  };
+}
+
+export interface GlobalSettings {
+  ankiField: string;
+  stats: UserStats;
+  aesthetics: ReaderAesthetics;
+  language: Language;
+  theme: 'dark' | 'light';
+  tapToSelect: boolean;
+  showArrows: boolean;
+  centerActive: boolean;
+}
+
+export interface UserLibrary {
+  books: BookEntry[];
+  activeBookId?: string;
+  settings: GlobalSettings;
+}
+
+// Legacy format for migration
 export interface UserProfile {
   sentences: string[];
   activeIndex: number;

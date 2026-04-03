@@ -17,6 +17,7 @@ interface BottomHUDProps {
   isBookmarked?: boolean;
   readerActions: ReaderActions;
   t: any;
+  onOpenLibrary: () => void;
 }
 
 export const BottomHUD: React.FC<BottomHUDProps> = React.memo(({ 
@@ -29,7 +30,8 @@ export const BottomHUD: React.FC<BottomHUDProps> = React.memo(({
   onOpenJump,
   isBookmarked = false,
   readerActions,
-  t
+  t,
+  onOpenLibrary
 }) => {
   const activeSentence = sentences[activeIndex] || '';
 
@@ -68,6 +70,31 @@ export const BottomHUD: React.FC<BottomHUDProps> = React.memo(({
         }}>
           <BookInfo metadata={metadata} />
           {!isMobile && <ProgressBar sentences={sentences} activeIndex={activeIndex} onOpenJump={onOpenJump} />}
+          <button
+            onClick={onOpenLibrary}
+            style={{
+              background: 'var(--btn-bg)',
+              color: 'var(--btn-text)',
+              border: 'none',
+              padding: '10px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: 'var(--btn-shadow)',
+              opacity: 0.8,
+              transition: 'opacity 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '0.8'}
+            aria-label={t.library || "Library"}
+            title={t.library || "Library"}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            </svg>
+          </button>
         </div>
 
         <TranslationPanel 

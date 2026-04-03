@@ -31,7 +31,13 @@ export const translations = {
     connectDrive: 'Connect Google Drive',
     unsavedChanges: 'Unsaved Changes',
     notes: 'Reader Notes',
-    notesPlaceholder: 'Write your notes here...',
+    notesHelp: 'Use this to store grammar notes or personal thoughts.',
+    library: 'Library',
+    myLibrary: 'My Library',
+    activeBook: 'Active',
+    deleteBook: 'Delete Book',
+    confirmDeleteBook: 'Are you sure you want to delete this book from your library? Progress will be lost.',
+    noBooks: 'No books in library. Load an EPUB to start reading!',
 
     // Action Tooltips
     translateTooltip: 'Translate Active Sentence [T]',
@@ -116,6 +122,13 @@ export const translations = {
     unsavedChanges: '未保存の変更',
     notes: 'メモ',
     notesPlaceholder: 'ここにメモを入力してください...',
+    notesHelp: '文法事項や読書メモにご活用ください。',
+    library: 'ライブラリ',
+    myLibrary: 'マイライブラリ',
+    activeBook: '読書中',
+    deleteBook: '本を削除',
+    confirmDeleteBook: 'この本をライブラリから削除してもよろしいですか？進捗データも削除されます。',
+    noBooks: 'ライブラリに本がありません。EPUBを読み込んで読書を始めましょう！',
 
     // Action Tooltips
     translateTooltip: '現在の文章を翻訳 [T]',
