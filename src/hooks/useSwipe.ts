@@ -10,8 +10,9 @@ interface SwipeHandlers {
  * For vertical-rl reading: swipe left = next, swipe right = prev.
  */
 export function useSwipe(
-  onSwipeLeft: () => void,
-  onSwipeRight: () => void,
+  onSwipePrev: () => void,
+  onSwipeNext: () => void,
+  axis: 'x' | 'y' = 'x',
   threshold = 50
 ): SwipeHandlers {
   const startX = useRef(0);
@@ -25,18 +26,17 @@ export function useSwipe(
   const onTouchEnd = useCallback((e: React.TouchEvent) => {
     const endX = e.changedTouches[0].clientX;
     const endY = e.changedTouches[0].clientY;
-    const diffX = endX - startX.current;
-    const diffY = endY - startY.current;
+    const diff = axis === 'x' ? endX - startX.current : endY - startY.current;
+    const crossDiff = axis === 'x' ? endY - startY.current : endX - startX.current;
 
-    // Only trigger if horizontal distance > vertical distance (avoid accidental swipes while scrolling)
-    if (Math.abs(diffX) < threshold || Math.abs(diffX) < Math.abs(diffY)) return;
+    if (Math.abs(diff) < threshold || Math.abs(diff) < Math.abs(crossDiff)) return;
 
-    if (diffX < 0) {
-      onSwipeLeft();
+    if (diff < 0) {
+      onSwipeNext();
     } else {
-      onSwipeRight();
+      onSwipePrev();
     }
-  }, [onSwipeLeft, onSwipeRight, threshold]);
+  }, [onSwipePrev, onSwipeNext, axis, threshold]);
 
   return { onTouchStart, onTouchEnd };
 }

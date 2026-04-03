@@ -147,6 +147,7 @@ function loadSavedLibrary(): UserLibrary {
       tapToSelect: localStorage.getItem('tapToSelect') !== 'false',
       showArrows: localStorage.getItem('showArrows') !== 'false',
       centerActive: localStorage.getItem('centerActive') !== 'false',
+      readerOrientation: (localStorage.getItem('readerOrientation') as any) || 'vertical',
     }
   };
 
@@ -182,6 +183,7 @@ function loadSavedLibrary(): UserLibrary {
           tapToSelect: defaultLibrary.settings.tapToSelect,
           showArrows: defaultLibrary.settings.showArrows,
           centerActive: defaultLibrary.settings.centerActive,
+          readerOrientation: defaultLibrary.settings.readerOrientation,
         }
       };
     }
@@ -219,6 +221,7 @@ function App() {
   const [tapToSelect, setTapToSelect] = useState<boolean>(library.settings.tapToSelect);
   const [showArrows, setShowArrows] = useState<boolean>(library.settings.showArrows);
   const [centerActive, setCenterActive] = useState<boolean>(library.settings.centerActive);
+  const [readerOrientation, setReaderOrientation] = useState<'vertical' | 'horizontal'>(library.settings.readerOrientation);
 
   const [error, setError] = useState<string | null>(null);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
@@ -287,10 +290,11 @@ function App() {
         theme,
         tapToSelect,
         showArrows,
-        centerActive
+        centerActive,
+        readerOrientation
       }
     }));
-  }, [ankiField, stats, aesthetics, language, theme, tapToSelect, showArrows, centerActive]);
+  }, [ankiField, stats, aesthetics, language, theme, tapToSelect, showArrows, centerActive, readerOrientation]);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -387,6 +391,12 @@ function App() {
   const toggleCenterActive = () => setCenterActive(prev => {
     const next = !prev;
     localStorage.setItem('centerActive', String(next));
+    return next;
+  });
+  
+  const toggleOrientation = () => setReaderOrientation(prev => {
+    const next = prev === 'vertical' ? 'horizontal' : 'vertical';
+    localStorage.setItem('readerOrientation', next);
     return next;
   });
 
@@ -527,6 +537,9 @@ function App() {
         {t.centerActive}
         <StatusDot active={centerActive} />
       </button>
+      <button onClick={() => toggleOrientation()} style={menuItemStyle}>
+        {readerOrientation === 'vertical' ? 'Mode: Vertical' : 'Mode: Horizontal'}
+      </button>
 
       <MenuCategory label={t.dataActions || "Actions"} />
       <button onClick={() => { setCurrentView('stats'); setMobileMenuOpen(false); }} style={menuItemStyle}>
@@ -621,6 +634,7 @@ function App() {
             minedSentences={minedSentencesSet}
             bookmarks={bookmarks}
             onOpenJump={() => setJumpModalOpen(true)}
+            orientation={readerOrientation}
           />
           <BottomHUD 
             metadata={metadata} 

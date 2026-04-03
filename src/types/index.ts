@@ -19,6 +19,7 @@ export interface ReaderProps {
   showArrows: boolean;
   centerActive: boolean;
   onOpenJump: () => void;
+  orientation: 'vertical' | 'horizontal';
 }
 
 export interface BookMetadata {
@@ -68,6 +69,7 @@ export interface GlobalSettings {
   tapToSelect: boolean;
   showArrows: boolean;
   centerActive: boolean;
+  readerOrientation: 'vertical' | 'horizontal';
 }
 
 export interface UserLibrary {

@@ -1,6 +1,11 @@
 import { useEffect, useRef } from 'react';
 
-export const useScrollCenter = (activeIndex: number, totalSentences: number, centerActive: boolean = true) => {
+export const useScrollCenter = (
+  activeIndex: number, 
+  totalSentences: number, 
+  centerActive: boolean = true,
+  orientation: 'vertical' | 'horizontal' = 'vertical'
+) => {
   const sentenceRefs = useRef<(HTMLDivElement | null)[]>([]);
   const prevCenterActive = useRef(centerActive);
 
@@ -20,8 +25,9 @@ export const useScrollCenter = (activeIndex: number, totalSentences: number, cen
     if (centerActive) {
       // CENTERED MODE: Auto-scrolling to center the active element
       activeElement.scrollIntoView({
-        inline: 'center', // Horizontal centering for vertical writing mode (block axis)
-        block: 'center'   // Vertical centering (inline axis)
+        inline: 'center', 
+        block: 'center',
+        behavior: 'smooth'
       });
     } else {
       // PAGINATED MODE: Stay static until edge is reached
@@ -30,20 +36,32 @@ export const useScrollCenter = (activeIndex: number, totalSentences: number, cen
 
       const rect = activeElement.getBoundingClientRect();
       const containerRect = container.getBoundingClientRect();
-      const buffer = 80; // Trigger "flip" before the actual edge for better comfort
+      const buffer = 80;
 
-      // In vertical-rl: 
-      // Advancing to the left (next sentence): if rect.left is beyond container's left edge
-      // OR if we just toggled from centered to paginated mode (force a snap to the right edge)
-      if (wasToggledOff || rect.left < containerRect.left + buffer) {
-        activeElement.scrollIntoView({ inline: 'start' }); // Snap to right edge (start)
-      } 
-      // Going back to the right (previous sentence): if rect.right is beyond container's right edge
-      else if (rect.right > containerRect.right - buffer) {
-        activeElement.scrollIntoView({ inline: 'end' }); // Snap to left edge (end)
+      if (orientation === 'vertical') {
+        // Vertical-RL: Horizontal scrolling (Right to Left)
+        if (wasToggledOff || rect.left < containerRect.left + buffer) {
+          // Moving forward (Left): snap current sentence to the RIGHT (start)
+          activeElement.scrollIntoView({ inline: 'start', behavior: 'smooth' }); 
+        } 
+        else if (rect.right > containerRect.right - buffer) {
+          // Moving backward (Right): snap current sentence to the LEFT (end)
+          activeElement.scrollIntoView({ inline: 'end', behavior: 'smooth' });
+        }
+      } else {
+        // Horizontal-TB: Vertical scrolling (Top to Bottom)
+        // If we just toggled centering OFF, snap to the Top (Start)
+        if (wasToggledOff || rect.bottom > containerRect.bottom - buffer) {
+          // Moving forward (Down): snap current sentence to the TOP (start)
+          activeElement.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        }
+        else if (rect.top < containerRect.top + buffer) {
+          // Moving backward (Up): snap current sentence to the BOTTOM (end)
+          activeElement.scrollIntoView({ block: 'end', behavior: 'smooth' });
+        }
       }
     }
-  }, [activeIndex, totalSentences, centerActive]);
+  }, [activeIndex, totalSentences, centerActive, orientation]);
 
   // Provide a clean callback to assign DOM nodes to our ref array
   const assignRef = (idx: number) => (el: HTMLDivElement | null) => {

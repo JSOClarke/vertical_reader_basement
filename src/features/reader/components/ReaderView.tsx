@@ -18,6 +18,7 @@ export const ReaderView: React.FC<ReaderViewProps> = React.memo(({
   centerActive,
   minedSentences,
   bookmarks,
+  orientation,
   assignRef
 }) => {
   const goNext = useCallback(() => {
@@ -28,12 +29,12 @@ export const ReaderView: React.FC<ReaderViewProps> = React.memo(({
     onIndexChange((prev: number) => Math.max(prev - 1, 0));
   }, [onIndexChange]);
 
-  // Swipe right = next sentence, swipe left = previous (vertical-rl layout)
-  const { onTouchStart, onTouchEnd } = useSwipe(goPrev, goNext);
+  // Swipe logic: axis matches orientation (X for vertical-rl, Y for horizontal-tb)
+  const { onTouchStart, onTouchEnd } = useSwipe(goPrev, goNext, orientation === 'vertical' ? 'x' : 'y');
 
   return (
     <div
-      className={`${styles.readerContainer} ${!centerActive ? styles.noCentering : ''}`}
+      className={`${styles.readerContainer} ${!centerActive ? styles.noCentering : ''} ${orientation === 'horizontal' ? styles.horizontal : ''}`}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
