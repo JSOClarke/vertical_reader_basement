@@ -1,13 +1,13 @@
 import React from 'react';
-import type { UserStats } from '../../../types';
+import { useProfileStore } from '../../profile/store/useProfileStore';
 
 interface StatsViewProps {
-  stats: UserStats;
   onClose: () => void;
   t: any;
 }
 
-export const StatsView: React.FC<StatsViewProps> = ({ stats, onClose, t }) => {
+export const StatsView: React.FC<StatsViewProps> = ({ onClose, t }) => {
+  const stats = useProfileStore(state => state.stats);
   const { totalCharactersRead, readingDays, miningHistory = [] } = stats;
   const totalDays = readingDays.length;
   const totalMined = miningHistory.length;

@@ -1,29 +1,27 @@
 import React from 'react';
 import { Button } from '../../../components/ui/Button';
+import { useProfileStore } from '../../profile/store/useProfileStore';
+import { useReaderStore } from '../../reader/store/useReaderStore';
+import { useSyncActions } from '../hooks/useSyncActions';
+import { translations } from '../../../localization/translations';
 
-interface CloudHUDProps {
-  isConnected: boolean;
-  isPushing: boolean;
-  isPulling: boolean;
-  lastSynced: string | null;
-  hasUnsavedChanges: boolean;
-  onConnect: () => void;
-  onPush: () => Promise<void>;
-  onPull: () => Promise<void>;
-  t: any;
-}
+interface CloudHUDProps {}
 
-export const CloudHUD: React.FC<CloudHUDProps> = ({
-  isConnected,
-  isPushing,
-  isPulling,
-  lastSynced,
-  hasUnsavedChanges,
-  onConnect,
-  onPush,
-  onPull,
-  t
-}) => {
+/**
+ * Autonomous Cloud Sync HUD.
+ * Refactored in Phase 4 to use hooks/stores directly, removing all prop-drilling.
+ */
+export const CloudHUD: React.FC<CloudHUDProps> = () => {
+  const language = useProfileStore(state => state.language);
+  const hasUnsavedChanges = useProfileStore(state => state.hasUnsavedChanges);
+  const showToast = useReaderStore(state => state.showToast);
+  const t = (translations as any)[language];
+
+  const { 
+    isConnected, isPushing, isPulling, lastSynced, 
+    connect, handleCloudPush, handleCloudPull 
+  } = useSyncActions(showToast, t);
+
   return (
     <div 
       style={{
@@ -39,7 +37,7 @@ export const CloudHUD: React.FC<CloudHUDProps> = ({
       {!isConnected ? (
         <Button 
           variant="hud"
-          onClick={onConnect}
+          onClick={connect}
           icon={
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M17.5 19c.6 0 1.1-.4 1.3-.9.4-1 .3-2.1-.3-3-.6-.9-1.5-1.5-2.5-1.5-.1 0-.3 0-.4.1-.4-2-2.1-3.6-4.1-3.6-1.5 0-2.8.9-3.5 2.1-.3-.1-.6-.1-.9-.1-1.6 0-2.9 1.3-2.9 2.9 0 .2 0 .4.1.5-1.1.4-1.9 1.5-1.9 2.8 0 1.5 1.1 2.7 2.6 2.7h12.5z" />
@@ -66,7 +64,7 @@ export const CloudHUD: React.FC<CloudHUDProps> = ({
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <Button 
               variant="hud"
-              onClick={onPush}
+              onClick={handleCloudPush}
               loading={isPushing}
               disabled={isPulling}
               active={true}
@@ -76,7 +74,7 @@ export const CloudHUD: React.FC<CloudHUDProps> = ({
             </Button>
             <Button 
               variant="hud"
-              onClick={onPull}
+              onClick={handleCloudPull}
               loading={isPulling}
               disabled={isPushing}
               active={true}

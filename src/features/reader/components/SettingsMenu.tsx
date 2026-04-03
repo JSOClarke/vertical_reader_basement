@@ -3,6 +3,8 @@ import type { UserProfile } from '../../../types';
 import { translations } from '../../../localization/translations';
 import { useProfileStore } from '../../profile/store/useProfileStore';
 import { useBookStore } from '../store/useBookStore';
+import { useSyncActions } from '../../cloud/hooks/useSyncActions';
+import { useReaderStore } from '../store/useReaderStore';
 import { Button } from '../../../components/ui/Button';
 import { ValueStepper } from '../../../components/ui/ValueStepper';
 
@@ -69,33 +71,23 @@ const MenuCategory = ({ label, expanded, onClick }: { label: string, expanded: b
 );
 
 export interface SettingsMenuProps {
-  toggleLanguage: () => void;
-  toggleTheme: () => void;
-  isConnected: boolean;
-  connect: () => void;
-  isPushing: boolean;
-  isPulling: boolean;
-  lastSynced: string | null;
-  handleCloudPush: () => Promise<void>;
-  handleCloudPull: () => Promise<void>;
-  setHasUnsavedChanges: (val: boolean) => void;
-  setCurrentView: (view: 'reader' | 'stats') => void;
   setMobileMenuOpen: (open: boolean) => void;
-  showToast: (msg: string, type: 'success' | 'error') => void;
+  setCurrentView: (view: 'reader' | 'stats') => void;
   setAnkiModalOpen: (open: boolean) => void;
   setError: (err: string | null) => void;
 }
 
-export const SettingsMenu: React.FC<SettingsMenuProps> = (props) => {
-  const { 
-    toggleLanguage, toggleTheme, isConnected, connect, 
-    isPushing, isPulling, lastSynced, handleCloudPush, handleCloudPull,
-    setHasUnsavedChanges,
-    setCurrentView, setMobileMenuOpen, 
-    showToast, setAnkiModalOpen, setError
-  } = props;
-
-  // High-performance atomic selectors
+/**
+ * Autonomous Settings Menu.
+ * Refactored in Phase 4 to use hooks/stores directly, removing 12+ props.
+ */
+export const SettingsMenu: React.FC<SettingsMenuProps> = ({
+  setMobileMenuOpen,
+  setCurrentView,
+  setAnkiModalOpen,
+  setError
+}) => {
+  // Global Store State
   const language = useProfileStore(state => state.language);
   const theme = useProfileStore(state => state.theme);
   const aesthetics = useProfileStore(state => state.aesthetics);
@@ -107,11 +99,15 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = (props) => {
   const bookmarks = useProfileStore(state => state.bookmarks);
   const ankiField = useProfileStore(state => state.ankiField);
 
+  // Store Actions
+  const toggleLanguage = useProfileStore(state => state.toggleLanguage);
+  const toggleTheme = useProfileStore(state => state.toggleTheme);
   const setAesthetics = useProfileStore(state => state.setAesthetics);
   const toggleTapToSelect = useProfileStore(state => state.toggleTapToSelect);
   const toggleArrows = useProfileStore(state => state.toggleArrows);
   const toggleCenterActive = useProfileStore(state => state.toggleCenterActive);
   const setActiveIndex = useProfileStore(state => state.setActiveIndex);
+  const setHasUnsavedChanges = useProfileStore(state => state.setHasUnsavedChanges);
   const importProfile = useProfileStore(state => state.importProfile);
 
   const bookData = useBookStore(state => state.sentences);
@@ -119,9 +115,16 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = (props) => {
   const setBookData = useBookStore(state => state.setBookData);
   const setMetadata = useBookStore(state => state.setMetadata);
 
-  const [expandedCategory, setExpandedCategory] = useState<string | null>('cloud');
+  const showToast = useReaderStore(state => state.showToast);
   const t = (translations as any)[language];
 
+  // Cloud Actions
+  const { 
+    isConnected, isPushing, isPulling, lastSynced, 
+    connect, handleCloudPush, handleCloudPull 
+  } = useSyncActions(showToast, t);
+
+  const [expandedCategory, setExpandedCategory] = useState<string | null>('cloud');
   const toggle = (cat: string) => setExpandedCategory(prev => prev === cat ? null : cat);
 
   return (
@@ -180,10 +183,10 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = (props) => {
       />
       <div className={`accordion-content ${expandedCategory === 'display' ? 'expanded' : ''}`}>
         <div className="accordion-inner">
-          <Button variant="menu" onClick={() => toggleTheme()}>
+          <Button variant="menu" onClick={toggleTheme}>
             {theme === 'dark' ? t.lightMode : t.darkMode}
           </Button>
-          <Button variant="menu" onClick={() => toggleLanguage()}>
+          <Button variant="menu" onClick={toggleLanguage}>
             {language === 'en' ? 'Language: EN' : '言語: 日本語'}
           </Button>
         </div>
@@ -234,15 +237,15 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = (props) => {
       />
       <div className={`accordion-content ${expandedCategory === 'reading' ? 'expanded' : ''}`}>
         <div className="accordion-inner">
-          <Button variant="menu" onClick={() => toggleTapToSelect()}>
+          <Button variant="menu" onClick={() => { toggleTapToSelect(); setHasUnsavedChanges(true); }}>
             {t.tapSelect}
             <StatusDot active={tapToSelect} />
           </Button>
-          <Button variant="menu" onClick={() => toggleArrows()}>
+          <Button variant="menu" onClick={() => { toggleArrows(); setHasUnsavedChanges(true); }}>
             {t.showArrows}
             <StatusDot active={showArrows} />
           </Button>
-          <Button variant="menu" onClick={() => toggleCenterActive()}>
+          <Button variant="menu" onClick={() => { toggleCenterActive(); setHasUnsavedChanges(true); }}>
             {t.centerActive}
             <StatusDot active={centerActive} />
           </Button>
@@ -285,7 +288,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = (props) => {
               link.click();
               URL.revokeObjectURL(url);
               setMobileMenuOpen(false);
-              showToast(t.copiedToast, 'success');
+              showToast(t.copiedToast || "Profile Exported!");
             }}
           >
             {t.exportProfile}
@@ -307,9 +310,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = (props) => {
                     setMetadata(json.metadata);
                     importProfile(json);
                     setError(null);
-                    showToast(t.cloudPullSuccess, 'success');
-                  } else { showToast(t.invalidProfile, 'error'); }
-                } catch { showToast(t.failedParseProfile, 'error'); }
+                    showToast(t.cloudPullSuccess || "Profile Imported!");
+                  } else { showToast(t.invalidProfile || "Invalid Profile", 'error'); }
+                } catch { showToast(t.failedParseProfile || "Fail to parse JSON", 'error'); }
               };
               reader.readAsText(file);
               e.target.value = '';

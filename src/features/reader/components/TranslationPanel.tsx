@@ -1,6 +1,10 @@
 import React from 'react';
-import type { BookMetadata } from '../../../types';
-import type { ReaderActions } from '../hooks/useReaderActions';
+import { useProfileStore } from '../../profile/store/useProfileStore';
+import { useBookStore } from '../store/useBookStore';
+import { useReaderStore } from '../store/useReaderStore';
+import { useAnki } from '../../anki/hooks/useAnki';
+import { useReaderActions } from '../hooks/useReaderActions';
+import { translations } from '../../../localization/translations';
 
 const TranslateIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -34,29 +38,33 @@ const BookmarkIcon = ({ filled }: { filled: boolean }) => (
   </svg>
 );
 
-
 interface TranslationPanelProps {
   activeSentence: string;
   isMobile?: boolean;
-  metadata?: BookMetadata;
-  ankiField?: string;
-  onAnkiMine: (sentence: string) => void;
-  isBookmarked: boolean;
-  readerActions: ReaderActions;
-  t: any;
 }
 
 export const TranslationPanel: React.FC<TranslationPanelProps> = ({ 
   activeSentence, 
   isMobile = false, 
-  metadata, 
-  ankiField = '', 
-  onAnkiMine,
-  isBookmarked,
-  readerActions,
-  t 
 }) => {
-  const { translation, loading, ankiLoading, toast, translate, copy, mineAnki, toggleBookmark } = readerActions;
+  // Global Store Access
+  const language = useProfileStore(state => state.language);
+  const bookmarks = useProfileStore(state => state.bookmarks);
+  const activeIndex = useProfileStore(state => state.activeIndex);
+  const toggleBookmark = useProfileStore(state => state.toggleBookmark);
+  
+  // Transient UI Store Access
+  const translation = useReaderStore(state => state.translation);
+  const loading = useReaderStore(state => state.isTranslating);
+  const toast = useReaderStore(state => state.toast);
+  const showToast = useReaderStore(state => state.showToast);
+  
+  const t = (translations as any)[language];
+  const isBookmarked = bookmarks.includes(activeIndex);
+
+  // Hooks for actions
+  const { translate, copy } = useReaderActions();
+  const { mineSentence, isAnkiLoading } = useAnki(showToast, t);
 
   return (
     <>
@@ -93,7 +101,7 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({
           </button>
   
           <button 
-            onClick={() => copy(activeSentence, t)}
+            onClick={() => copy(activeSentence, showToast, t)}
             title={t.copyTooltip}
             style={{
               background: 'var(--btn-bg)',
@@ -114,9 +122,9 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({
           >
             <CopyIcon />
           </button>
-
+  
           <button 
-            onClick={() => toggleBookmark()}
+            onClick={() => toggleBookmark(activeIndex)}
             title={t.bookmarkTooltip}
             style={{
               background: 'var(--btn-bg)',
@@ -137,17 +145,17 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({
           >
             <BookmarkIcon filled={isBookmarked} />
           </button>
-
+  
           {!isMobile && (
             <button 
-              onClick={() => mineAnki(activeSentence, metadata, ankiField, onAnkiMine, t)}
+              onClick={() => mineSentence(activeSentence)}
               title={t.ankiTooltip}
               style={{
                 background: 'var(--btn-bg)',
                 color: 'var(--btn-text)',
                 padding: '8px 12px',
                 borderRadius: '0', 
-                cursor: ankiLoading ? 'wait' : 'pointer',
+                cursor: isAnkiLoading ? 'wait' : 'pointer',
                 boxShadow: 'var(--btn-shadow)',
                 border: 'none',
                 display: 'flex',
@@ -158,10 +166,10 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({
               }}
               onMouseEnter={e => e.currentTarget.style.opacity = '1'}
               onMouseLeave={e => e.currentTarget.style.opacity = '0.4'}
-              disabled={ankiLoading}
+              disabled={isAnkiLoading}
             >
               <div style={{ 
-                animation: ankiLoading ? 'spin 1s linear infinite' : 'none', 
+                animation: isAnkiLoading ? 'spin 1s linear infinite' : 'none', 
                 display: 'flex', 
                 alignItems: 'center' 
               }}>
@@ -170,7 +178,7 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({
             </button>
           )}
         </div>
-
+  
         {translation && (
           <div style={{
             color: 'var(--text-color)',
@@ -186,7 +194,7 @@ export const TranslationPanel: React.FC<TranslationPanelProps> = ({
           </div>
         )}
       </div>
-
+  
       {toast && (
         <div style={{
           position: 'fixed',

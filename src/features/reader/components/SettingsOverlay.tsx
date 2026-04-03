@@ -1,23 +1,33 @@
 import React, { useRef, useEffect } from 'react';
 import { SettingsMenu, MenuIcon } from './SettingsMenu';
-import type { SettingsMenuProps } from './SettingsMenu';
 import { IconButton } from '../../../components/ui/IconButton';
+import { useProfileStore } from '../../profile/store/useProfileStore';
+import { translations } from '../../../localization/translations';
 
-interface SettingsOverlayProps extends SettingsMenuProps {
+interface SettingsOverlayProps {
   mobileMenuOpen: boolean;
   setMobileMenuOpen: (open: boolean) => void;
   isMobile: boolean;
-  t: any;
+  setCurrentView: (view: 'reader' | 'stats') => void;
+  setAnkiModalOpen: (open: boolean) => void;
+  setError: (err: string | null) => void;
 }
 
+/**
+ * Autonomous Settings Overlay.
+ * Refactored in Phase 4 to reduce prop count and use global stores.
+ */
 export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
   mobileMenuOpen,
   setMobileMenuOpen,
   isMobile,
-  t,
-  ...menuProps
+  setCurrentView,
+  setAnkiModalOpen,
+  setError
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
+  const language = useProfileStore(state => state.language);
+  const t = (translations as any)[language];
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -88,12 +98,17 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
           position: 'relative',
           zIndex: 3001
         }}>
-          <SettingsMenu setMobileMenuOpen={setMobileMenuOpen} {...menuProps} />
+          <SettingsMenu 
+            setMobileMenuOpen={setMobileMenuOpen} 
+            setCurrentView={setCurrentView}
+            setAnkiModalOpen={setAnkiModalOpen}
+            setError={setError}
+          />
           
           <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(128,128,128,0.1)' }}>
             <button 
               onClick={() => { 
-                if (window.confirm(t.confirmReset)) { 
+                if (window.confirm(t.confirmReset || "Are you sure you want to reset everything?")) { 
                   localStorage.clear(); 
                   window.location.reload(); 
                 } 
@@ -110,7 +125,7 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
                 fontFamily: "'Inter', 'system-ui', sans-serif" 
               }}
             >
-              {t.resetReader}
+              {t.resetReader || "Reset Reader"}
             </button>
           </div>
         </div>

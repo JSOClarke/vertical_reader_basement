@@ -1,37 +1,23 @@
-import { useState, useCallback } from 'react';
-import { updateLastCard } from '../../anki/utils/ankiConnect';
-import type { BookMetadata } from '../../../types';
+import { useCallback } from 'react';
+import { useReaderStore } from '../store/useReaderStore';
 
-export interface ReaderActions {
-  translation: string | null;
-  loading: boolean;
-  ankiLoading: boolean;
-  toast: { message: string; type: 'success' | 'error' } | null;
-  translate: (sentence: string) => Promise<void>;
-  copy: (sentence: string, t: any) => Promise<void>;
-  mineAnki: (sentence: string, metadata: BookMetadata | undefined, ankiField: string, onAnkiMine: (s: string) => void, t: any) => Promise<void>;
-  toggleBookmark: () => void;
-  clearTranslation: () => void;
-}
-
-export const useReaderActions = (onToggleBookmark: () => void): ReaderActions => {
-  const [translation, setTranslation] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [ankiLoading, setAnkiLoading] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-
-  const showToast = useCallback((message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  }, []);
-
+/**
+ * Hook for core reader UI actions like translation and copying.
+ * It coordinates with the useReaderStore for state management.
+ */
+export const useReaderActions = () => {
+  const setTranslation = useReaderStore((state) => state.setTranslation);
+  const setIsTranslating = useReaderStore((state) => state.setIsTranslating);
+  
   const translate = useCallback(async (sentence: string) => {
     if (!sentence || !sentence.trim()) return;
-    setLoading(true);
+    
+    setIsTranslating(true);
     try {
       const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl=en&dt=t&q=${encodeURIComponent(sentence)}`;
       const res = await fetch(url);
       const data = await res.json();
+      
       if (data && data[0]) {
         const translatedText = data[0].map((item: any) => item[0]).join('');
         setTranslation(translatedText);
@@ -42,54 +28,22 @@ export const useReaderActions = (onToggleBookmark: () => void): ReaderActions =>
       console.error(err);
       setTranslation('Network error during translation.');
     } finally {
-      setLoading(false);
+      setIsTranslating(false);
     }
-  }, []);
+  }, [setTranslation, setIsTranslating]);
 
-  const copy = useCallback(async (sentence: string, t: any) => {
+  const copy = useCallback(async (sentence: string, showToast: (m: string) => void, t: any) => {
     if (!sentence || !sentence.trim()) return;
     try {
       await navigator.clipboard.writeText(sentence);
-      showToast(t.copiedToast, 'success');
+      showToast(t.copiedToast);
     } catch (err) {
-      showToast(t.copyFailToast, 'error');
+      showToast(t.copyFailToast);
     }
-  }, [showToast]);
-
-  const mineAnki = useCallback(async (
-    sentence: string, 
-    metadata: BookMetadata | undefined, 
-    ankiField: string, 
-    onAnkiMine: (s: string) => void, 
-    t: any
-  ) => {
-    if (!ankiField || !ankiField.trim()) {
-      showToast(t.setAnkiFieldToast, 'error');
-      return;
-    }
-    setAnkiLoading(true);
-    try {
-      await updateLastCard(metadata, ankiField);
-      showToast(t.ankiSuccessToast, 'success');
-      onAnkiMine(sentence);
-    } catch (err: any) {
-      showToast(t.ankiFailToast, 'error');
-    } finally {
-      setAnkiLoading(false);
-    }
-  }, [showToast]);
-
-  const clearTranslation = useCallback(() => setTranslation(null), []);
+  }, []);
 
   return {
-    translation,
-    loading,
-    ankiLoading,
-    toast,
     translate,
     copy,
-    mineAnki,
-    toggleBookmark: onToggleBookmark,
-    clearTranslation
   };
 };

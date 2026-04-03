@@ -4,28 +4,22 @@ import { ProgressBar } from './ProgressBar';
 import { TranslationPanel } from './TranslationPanel';
 import { useProfileStore } from '../../profile/store/useProfileStore';
 import { useBookStore } from '../store/useBookStore';
-import type { ReaderActions } from '../hooks/useReaderActions';
 
 interface BottomHUDProps {
   isMobile?: boolean;
-  onAnkiMine: (sentence: string) => void;
   onOpenJump: () => void;
-  isBookmarked?: boolean;
-  readerActions: ReaderActions;
-  t: any;
 }
 
+/**
+ * Main HUD component for the reader.
+ * Refactored in Phase 4 to be autonomous and minimize prop-drilling.
+ */
 export const BottomHUD: React.FC<BottomHUDProps> = React.memo(({ 
   isMobile = false, 
-  onAnkiMine,
   onOpenJump,
-  isBookmarked = false,
-  readerActions,
-  t
 }) => {
   // High-performance atomic selectors
   const activeIndex = useProfileStore(state => state.activeIndex);
-  const ankiField = useProfileStore(state => state.ankiField);
   const sentences = useBookStore(state => state.sentences);
   const metadata = useBookStore(state => state.metadata);
 
@@ -59,12 +53,6 @@ export const BottomHUD: React.FC<BottomHUDProps> = React.memo(({
         <TranslationPanel 
           activeSentence={activeSentence} 
           isMobile={isMobile} 
-          metadata={metadata} 
-          ankiField={ankiField}
-          onAnkiMine={onAnkiMine}
-          isBookmarked={isBookmarked}
-          readerActions={readerActions}
-          t={t}
         />
       </div>
     </>

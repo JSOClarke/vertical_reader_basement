@@ -13,10 +13,13 @@ interface ProfileState extends Omit<UserProfile, 'sentences' | 'metadata'> {
   tapToSelect: boolean;
   showArrows: boolean;
   centerActive: boolean;
+  hasUnsavedChanges: boolean;
 
   // Actions
   setTheme: (theme: 'dark' | 'light') => void;
+  toggleTheme: () => void;
   setLanguage: (lang: Language) => void;
+  toggleLanguage: () => void;
   setAesthetics: (aesthetics: Partial<ReaderAesthetics>) => void;
   
   // Navigation & Progress
@@ -32,6 +35,7 @@ interface ProfileState extends Omit<UserProfile, 'sentences' | 'metadata'> {
   // Anki & Stats
   setAnkiField: (field: string) => void;
   setStats: (stats: UserStats | ((prev: UserStats) => UserStats)) => void;
+  setHasUnsavedChanges: (hasChanges: boolean) => void;
   
   // Batch updates (e.g. from Cloud Pull)
   importProfile: (profile: Partial<UserProfile>) => void;
@@ -61,10 +65,19 @@ export const useProfileStore = create<ProfileState>()(
         tapToSelect: true,
         showArrows: true,
         centerActive: true,
+        hasUnsavedChanges: false,
 
         // Actions
         setTheme: (theme) => set({ theme }),
+        toggleTheme: () => set((state) => ({ 
+          theme: state.theme === 'dark' ? 'light' : 'dark',
+          hasUnsavedChanges: true 
+        })),
         setLanguage: (language) => set({ language }),
+        toggleLanguage: () => set((state) => ({ 
+          language: state.language === 'en' ? 'ja' : 'en',
+          hasUnsavedChanges: true 
+        })),
         setAesthetics: (aesthetics) => set((state) => ({ 
           aesthetics: { ...state.aesthetics, ...aesthetics } 
         })),
@@ -89,6 +102,8 @@ export const useProfileStore = create<ProfileState>()(
         setStats: (stats) => set((state) => ({ 
           stats: typeof stats === 'function' ? stats(state.stats) : stats 
         })),
+        setHasUnsavedChanges: (hasUnsavedChanges) => set({ hasUnsavedChanges }),
+
 
         importProfile: (profile) => set((state) => ({
           activeIndex: profile.activeIndex ?? state.activeIndex,
