@@ -30,6 +30,8 @@ export const translations = {
     pullTitle: 'Pull from Cloud',
     connectDrive: 'Connect Google Drive',
     unsavedChanges: 'Unsaved Changes',
+    notes: 'Reader Notes',
+    notesPlaceholder: 'Write your notes here...',
 
     // Action Tooltips
     translateTooltip: 'Translate Active Sentence [T]',
@@ -112,6 +114,8 @@ export const translations = {
     pullTitle: 'クラウドから読込',
     connectDrive: 'Googleドライブに接続',
     unsavedChanges: '未保存の変更',
+    notes: 'メモ',
+    notesPlaceholder: 'ここにメモを入力してください...',
 
     // Action Tooltips
     translateTooltip: '現在の文章を翻訳 [T]',

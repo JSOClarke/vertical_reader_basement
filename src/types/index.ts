@@ -52,4 +52,5 @@ export interface UserProfile {
   stats?: UserStats;
   bookmarks?: number[];
   aesthetics?: ReaderAesthetics;
+  notes?: string;
 }
