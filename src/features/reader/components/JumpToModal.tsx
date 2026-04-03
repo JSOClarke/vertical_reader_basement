@@ -17,15 +17,41 @@ export const JumpToModal: React.FC<JumpToModalProps> = ({
 }) => {
   const [tempIndex, setTempIndex] = useState(currentIndex);
   const [inputVal, setInputVal] = useState((currentIndex + 1).toString());
+  const [isDragging, setIsDragging] = useState(false);
+  const seekRef = React.useRef<HTMLDivElement>(null);
 
-  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
+  const updateSeek = (clientX: number) => {
+    if (!seekRef.current) return;
+    const rect = seekRef.current.getBoundingClientRect();
+    const x = clientX - rect.left;
     const percentage = Math.max(0, Math.min(1, x / rect.width));
     const newIndex = Math.round(percentage * (totalSentences - 1));
     setTempIndex(newIndex);
     setInputVal((newIndex + 1).toString());
   };
+
+  React.useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      updateSeek(clientX);
+    };
+
+    const handleEnd = () => setIsDragging(false);
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove);
+    window.addEventListener('touchend', handleEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+    };
+  }, [isDragging]);
 
   const handleInputChange = (val: string) => {
     setInputVal(val);
@@ -98,11 +124,13 @@ export const JumpToModal: React.FC<JumpToModalProps> = ({
         {/* Minimalist Progress Track */}
         <div style={{ marginBottom: '50px' }}>
           <div 
-            onClick={handleSeek}
+            ref={seekRef}
+            onMouseDown={(e) => { setIsDragging(true); updateSeek(e.clientX); }}
+            onTouchStart={(e) => { setIsDragging(true); updateSeek(e.touches[0].clientX); }}
             style={{
-              height: '3px',
+              height: '6px',
               width: '100%',
-              background: 'rgba(128,128,128,0.2)',
+              background: 'rgba(128,128,128,0.1)',
               position: 'relative',
               cursor: 'pointer',
               marginBottom: '15px'
@@ -116,7 +144,7 @@ export const JumpToModal: React.FC<JumpToModalProps> = ({
                 height: '100%',
                 width: `${currentPercentage}%`,
                 background: 'var(--text-highlight)',
-                transition: 'width 0.2s cubic-bezier(0.1, 0.7, 0.1, 1)'
+                transition: isDragging ? 'none' : 'width 0.2s cubic-bezier(0.1, 0.7, 0.1, 1)'
               }}
             />
             {/* The "Handle" */}
@@ -125,13 +153,15 @@ export const JumpToModal: React.FC<JumpToModalProps> = ({
                 position: 'absolute',
                 top: '50%',
                 left: `${currentPercentage}%`,
-                transform: 'translate(-50%, -50%)',
-                width: '12px',
-                height: '12px',
+                transform: `translate(-50%, -50%) scale(${isDragging ? 1.4 : 1})`,
+                width: '14px',
+                height: '14px',
                 background: 'var(--bg-color)',
                 border: '2px solid var(--text-highlight)',
                 borderRadius: '50%',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.5)'
+                boxShadow: isDragging ? '0 0 15px var(--text-highlight)' : '0 2px 8px rgba(0,0,0,0.5)',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                zIndex: 2
               }}
             />
           </div>

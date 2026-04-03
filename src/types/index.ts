@@ -1,3 +1,5 @@
+export type Language = 'en' | 'ja';
+
 export interface SentenceProps {
   text: string;
   isActive: boolean;
@@ -52,4 +54,10 @@ export interface UserProfile {
   stats?: UserStats;
   bookmarks?: number[];
   aesthetics?: ReaderAesthetics;
+  // Persistent Preferences
+  theme?: 'dark' | 'light';
+  language?: Language;
+  tapToSelect?: boolean;
+  showArrows?: boolean;
+  centerActive?: boolean;
 }

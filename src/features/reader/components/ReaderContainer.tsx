@@ -1,26 +1,54 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ReaderView } from './ReaderView';
 import { useReaderState } from '../hooks/useReaderState';
 import { useScrollCenter } from '../hooks/useScrollCenter';
-import type { ReaderProps } from '../../../types';
+import { useProfileStore } from '../../profile/store/useProfileStore';
+import { useBookStore } from '../store/useBookStore';
 
-export const ReaderContainer: React.FC<ReaderProps> = ({ sentences, activeIndex, onIndexChange, tapToSelect, showArrows, centerActive, minedSentences, bookmarks, onOpenJump }) => {
-  useReaderState(sentences.length, onIndexChange);
+interface ReaderContainerProps {
+  onOpenJump: () => void;
+}
+
+export const ReaderContainer: React.FC<ReaderContainerProps> = React.memo(({ onOpenJump }) => {
+  // High-performance atomic selectors
+  const activeIndex = useProfileStore(state => state.activeIndex);
+  const setActiveIndex = useProfileStore(state => state.setActiveIndex);
+  const tapToSelect = useProfileStore(state => state.tapToSelect);
+  const showArrows = useProfileStore(state => state.showArrows);
+  const centerActive = useProfileStore(state => state.centerActive);
+  const stats = useProfileStore(state => state.stats);
+
+  const sentences = useBookStore(state => state.sentences);
+  const metadata = useBookStore(state => state.metadata);
+
+  useReaderState(sentences.length, setActiveIndex);
   const { assignRef } = useScrollCenter(activeIndex, sentences.length, centerActive);
+
+  // Derive mined sentences locally
+  const minedSentencesSet = useMemo(() => {
+    const currentTitle = metadata?.title || 'Unknown Book';
+    const set = new Set<string>();
+    if (stats.miningHistory) {
+      stats.miningHistory.forEach(card => {
+        if (card.bookTitle === currentTitle) {
+          set.add(card.sentence);
+        }
+      });
+    }
+    return set;
+  }, [stats.miningHistory, metadata?.title]);
 
   return (
     <ReaderView
       sentences={sentences}
       activeIndex={activeIndex}
-      onIndexChange={onIndexChange}
+      onIndexChange={setActiveIndex}
       tapToSelect={tapToSelect}
       showArrows={showArrows}
       assignRef={assignRef}
-      centerActive={centerActive}
-      minedSentences={minedSentences}
-      bookmarks={bookmarks}
       onOpenJump={onOpenJump}
+      minedSentences={minedSentencesSet}
+      centerActive={centerActive}
     />
   );
-};
-
+});

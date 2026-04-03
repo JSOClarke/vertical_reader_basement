@@ -3,9 +3,10 @@ import type { BookMetadata } from '../../../types';
 
 interface BookInfoProps {
   metadata?: BookMetadata;
+  isMobile?: boolean;
 }
 
-export const BookInfo: React.FC<BookInfoProps> = ({ metadata }) => {
+export const BookInfo: React.FC<BookInfoProps> = ({ metadata, isMobile = false }) => {
   if (!metadata || (!metadata.title && !metadata.coverImage)) return null;
 
   return (
@@ -15,7 +16,7 @@ export const BookInfo: React.FC<BookInfoProps> = ({ metadata }) => {
       gap: '15px',
       fontFamily: 'sans-serif'
     }}>
-      {metadata.coverImage && (
+      {!isMobile && metadata.coverImage && (
         <img 
           src={metadata.coverImage} 
           style={{ 
