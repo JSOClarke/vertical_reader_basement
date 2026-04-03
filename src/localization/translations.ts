@@ -39,6 +39,11 @@ export const translations = {
     confirmDeleteBook: 'Are you sure you want to delete this book from your library? Progress will be lost.',
     noBooks: 'No books in library. Load an EPUB to start reading!',
     lastSynced: 'Last Synced',
+    presetsTitle: 'Aesthetics Presets',
+    savePreset: 'Save Current as Preset',
+    presetNamePlaceholder: 'Preset Name',
+    deleteKey: 'Delete',
+    confirmDeletePreset: 'Delete this preset?',
 
     // Action Tooltips
     translateTooltip: 'Translate Active Sentence [T]',
@@ -131,6 +136,11 @@ export const translations = {
     confirmDeleteBook: 'この本をライブラリから削除してもよろしいですか？進捗データも削除されます。',
     noBooks: 'ライブラリに本がありません。EPUBを読み込んで読書を始めましょう！',
     lastSynced: '同期日時',
+    presetsTitle: '外観プリセット',
+    savePreset: '現在の設定を保存',
+    presetNamePlaceholder: 'プリセット名',
+    deleteKey: '削除',
+    confirmDeletePreset: 'このプリセットを削除しますか？',
 
     // Action Tooltips
     translateTooltip: '現在の文章を翻訳 [T]',

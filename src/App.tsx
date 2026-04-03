@@ -13,7 +13,7 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { SAMPLE_DATA } from './data/mockBook';
 import { translations } from './localization/translations';
 import type { Language } from './localization/translations';
-import type { BookMetadata, UserStats, ReaderAesthetics, UserLibrary, BookEntry } from './types';
+import type { BookMetadata, UserStats, ReaderAesthetics, UserLibrary, BookEntry, AestheticsPreset } from './types';
 import './App.css'; 
 
 const menuItemStyle: React.CSSProperties = {
@@ -148,6 +148,7 @@ function loadSavedLibrary(): UserLibrary {
       showArrows: localStorage.getItem('showArrows') !== 'false',
       centerActive: localStorage.getItem('centerActive') !== 'false',
       readerOrientation: (localStorage.getItem('readerOrientation') as any) || 'vertical',
+      aestheticsPresets: [],
     }
   };
 
@@ -184,6 +185,7 @@ function loadSavedLibrary(): UserLibrary {
           showArrows: defaultLibrary.settings.showArrows,
           centerActive: defaultLibrary.settings.centerActive,
           readerOrientation: defaultLibrary.settings.readerOrientation,
+          aestheticsPresets: parsed.aestheticsPresets || [],
         }
       };
     }
@@ -222,6 +224,7 @@ function App() {
   const [showArrows, setShowArrows] = useState<boolean>(library.settings.showArrows);
   const [centerActive, setCenterActive] = useState<boolean>(library.settings.centerActive);
   const [readerOrientation, setReaderOrientation] = useState<'vertical' | 'horizontal'>(library.settings.readerOrientation);
+  const [aestheticsPresets, setAestheticsPresets] = useState<AestheticsPreset[]>(library.settings.aestheticsPresets || []);
 
   const [error, setError] = useState<string | null>(null);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
@@ -291,10 +294,11 @@ function App() {
         tapToSelect,
         showArrows,
         centerActive,
-        readerOrientation
+        readerOrientation,
+        aestheticsPresets
       }
     }));
-  }, [ankiField, stats, aesthetics, language, theme, tapToSelect, showArrows, centerActive, readerOrientation]);
+  }, [ankiField, stats, aesthetics, language, theme, tapToSelect, showArrows, centerActive, readerOrientation, aestheticsPresets]);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -399,6 +403,31 @@ function App() {
     localStorage.setItem('readerOrientation', next);
     return next;
   });
+
+  const saveCurrentAsPreset = () => {
+    const name = window.prompt(t.presetNamePlaceholder || "Preset Name");
+    if (!name) return;
+    
+    const newPreset: AestheticsPreset = {
+      id: Date.now().toString(),
+      name,
+      aesthetics: { ...aesthetics }
+    };
+    
+    setAestheticsPresets(prev => [...prev, newPreset]);
+    showToast(t.cloudPushSuccess || "Saved!");
+  };
+
+  const applyPreset = (preset: AestheticsPreset) => {
+    setAesthetics(preset.aesthetics);
+    showToast(`${preset.name} applied`);
+  };
+
+  const deletePreset = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm(t.confirmDeletePreset || "Delete?")) return;
+    setAestheticsPresets(prev => prev.filter(p => p.id !== id));
+  };
 
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
 
@@ -523,6 +552,33 @@ function App() {
         onDecrease={() => setAesthetics(prev => ({ ...prev, readingWidth: Math.max(30, prev.readingWidth - 5) }))}
         onIncrease={() => setAesthetics(prev => ({ ...prev, readingWidth: Math.min(100, prev.readingWidth + 5) }))}
       />
+      
+      <MenuCategory label={t.presetsTitle || "Presets"} />
+      <button onClick={saveCurrentAsPreset} style={{ ...menuItemStyle, color: 'var(--accent-color)', justifyContent: 'center', fontWeight: 'bold' }}>
+        + {t.savePreset || "Save Current"}
+      </button>
+      
+      {aestheticsPresets.map(preset => (
+        <div key={preset.id} style={{ display: 'flex', alignItems: 'center' }}>
+          <button onClick={() => applyPreset(preset)} style={{ ...menuItemStyle, borderBottom: 'none' }}>
+            {preset.name}
+          </button>
+          <button 
+            onClick={(e) => deletePreset(preset.id, e)} 
+            style={{ 
+              background: 'transparent', 
+              border: 'none', 
+              color: '#ff4b4b', 
+              padding: '10px 20px', 
+              cursor: 'pointer',
+              fontSize: '10px',
+              opacity: 0.5
+            }}
+          >
+            {t.deleteKey || "Delete"}
+          </button>
+        </div>
+      ))}
       
       <MenuCategory label={t.readingSettings || "Reading"} />
       <button onClick={() => toggleTapToSelect()} style={menuItemStyle}>

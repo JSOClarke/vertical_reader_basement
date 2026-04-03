@@ -47,6 +47,12 @@ export interface ReaderAesthetics {
   readingWidth: number;   // % of viewport (e.g., 50-100)
 }
 
+export interface AestheticsPreset {
+  id: string;
+  name: string;
+  aesthetics: ReaderAesthetics;
+}
+
 // New Multi-Book Structure
 export interface BookEntry {
   id: string; // Hash of title + author + sentence count
@@ -70,6 +76,7 @@ export interface GlobalSettings {
   showArrows: boolean;
   centerActive: boolean;
   readerOrientation: 'vertical' | 'horizontal';
+  aestheticsPresets: AestheticsPreset[];
 }
 
 export interface UserLibrary {
