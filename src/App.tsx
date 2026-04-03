@@ -764,6 +764,11 @@ function App() {
                   {t.unsavedChanges}
                 </div>
               )}
+              {lastSynced && !hasUnsavedChanges && (
+                <div style={{ fontSize: '9px', color: 'var(--text-color)', opacity: 0.4, textTransform: 'uppercase' }}>
+                  {t.lastSynced || "Synced"}: {lastSynced}
+                </div>
+              )}
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={() => handleCloudPush()} disabled={isPushing || isPulling} style={{ ...hudButtonStyle, opacity: 0.3 }}>
                   {isPushing ? 'Saving...' : 'Save'}

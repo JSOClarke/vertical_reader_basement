@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { UserProfile } from '../types';
+import type { UserLibrary } from '../types';
 
 const CLIENT_ID = '338920617728-d6h3n4brsi6bpln1gfep002su80gqkar.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
@@ -13,8 +13,8 @@ interface GoogleDriveHook {
   lastSynced: string | null;
   error: string | null;
   connect: () => void;
-  push: (data: UserProfile) => Promise<boolean>;
-  pull: () => Promise<UserProfile | null>;
+  push: (data: UserLibrary) => Promise<boolean>;
+  pull: () => Promise<UserLibrary | null>;
 }
 
 export function useGoogleDrive(): GoogleDriveHook {
@@ -81,7 +81,7 @@ export function useGoogleDrive(): GoogleDriveHook {
     return data.files && data.files.length > 0 ? data.files[0].id : null;
   };
 
-  const push = useCallback(async (data: UserProfile): Promise<boolean> => {
+  const push = useCallback(async (data: UserLibrary): Promise<boolean> => {
     if (!accessToken) return false;
     setIsPushing(true);
     setError(null);
@@ -128,7 +128,7 @@ export function useGoogleDrive(): GoogleDriveHook {
     }
   }, [accessToken]);
 
-  const pull = useCallback(async (): Promise<UserProfile | null> => {
+  const pull = useCallback(async (): Promise<UserLibrary | null> => {
     if (!accessToken) return null;
     setIsPulling(true);
     setError(null);

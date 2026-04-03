@@ -4,8 +4,9 @@
   left: -400px;
   width: min(85vw, 400px);
   height: 100vh;
-  background-color: var(--sidebar-bg, #1a1a1a);
-  box-shadow: 5px 0 15px rgba(0, 0, 0, 0.3);
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.1);
   transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 3000;
   display: flex;
@@ -22,7 +23,8 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--overlay-bg);
+  backdrop-filter: blur(4px);
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease;
@@ -35,8 +37,8 @@
 }
 
 .header {
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color, #333);
+  padding: 2rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -44,63 +46,82 @@
 
 .title {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-color, #e0e0e0);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-color);
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
 }
 
 .closeButton {
   background: none;
   border: none;
-  color: var(--text-color, #e0e0e0);
+  color: var(--text-color);
   cursor: pointer;
   padding: 0.5rem;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeButton:hover {
+  opacity: 1;
 }
 
 .bookList {
   flex: 1;
   overflow-y: auto;
-  padding: 1rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .emptyState {
   text-align: center;
-  margin-top: 3rem;
-  color: var(--text-color, #e0e0e0);
-  opacity: 0.6;
+  margin-top: 5rem;
+  color: var(--text-color);
+  opacity: 0.4;
+  font-size: 0.9rem;
 }
 
 .bookItem {
   display: flex;
-  gap: 1rem;
-  padding: 0.75rem;
-  background: rgba(128, 128, 128, 0.05);
+  gap: 1.25rem;
+  padding: 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   cursor: pointer;
-  border: 1px solid transparent;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   align-items: center;
 }
 
 .bookItem:hover {
-  background: rgba(128, 128, 128, 0.1);
-  transform: translateY(-2px);
+  background: var(--card-bg);
+  border-color: var(--accent-color);
+  transform: translateX(4px);
+  box-shadow: var(--card-shadow);
 }
 
 .bookItem.active {
-  border-color: #f59e0b;
+  border-color: var(--accent-color);
   background: rgba(245, 158, 11, 0.05);
 }
 
 .coverWrapper {
   position: relative;
-  width: 60px;
-  height: 85px;
+  width: 70px;
+  height: 100px;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  transition: transform 0.25s ease;
+}
+
+.bookItem:hover .coverWrapper {
+  transform: scale(1.05);
 }
 
 .cover {
@@ -112,27 +133,28 @@
 .placeholderCover {
   width: 100%;
   height: 100%;
-  background: var(--btn-bg, #333);
+  background: var(--btn-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
   font-weight: bold;
-  color: #888;
+  color: var(--btn-text);
 }
 
 .activeBadge {
   position: absolute;
-  top: -5px;
-  left: -5px;
-  background: #f59e0b;
-  color: black;
+  top: -6px;
+  left: -6px;
+  background: var(--accent-color);
+  color: #000;
   font-size: 0.6rem;
-  font-weight: 800;
-  padding: 2px 5px;
+  font-weight: 900;
+  padding: 3px 6px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  z-index: 2;
 }
 
 .bookInfo {
@@ -142,19 +164,20 @@
 
 .bookTitle {
   margin: 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text-color, #e0e0e0);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-bottom: 0.25rem;
 }
 
 .bookAuthor {
-  margin: 0.2rem 0 0.5rem;
+  margin: 0 0 0.75rem;
   font-size: 0.8rem;
-  color: var(--text-color, #e0e0e0);
-  opacity: 0.6;
+  color: var(--text-color);
+  opacity: 0.5;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -162,37 +185,49 @@
 
 .progressContainer {
   width: 100%;
-  height: 4px;
-  background: rgba(128, 128, 128, 0.1);
-  margin-bottom: 0.25rem;
+  height: 6px;
+  background: var(--progress-track);
+  margin-bottom: 0.35rem;
+  border-radius: 3px;
+  overflow: hidden;
 }
 
 .progressBar {
   height: 100%;
-  background: #f59e0b;
+  background: var(--accent-color);
   transition: width 0.3s ease;
 }
 
 .progressText {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #f59e0b;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--accent-color);
+  font-variant-numeric: tabular-nums;
 }
 
 .deleteButton {
-  background: none;
-  border: none;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--sidebar-bg);
+  border: 1px solid var(--border-color);
   color: #ef4444;
   cursor: pointer;
-  padding: 0.5rem;
+  padding: 4px;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
 }
 
 .bookItem:hover .deleteButton {
-  opacity: 0.6;
+  opacity: 0.8;
 }
 
 .deleteButton:hover {
   opacity: 1 !important;
+  background: #fee2e2;
+  border-color: #fecaca;
 }

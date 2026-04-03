@@ -7,6 +7,16 @@
   --btn-text: #121212;
   --btn-shadow: 0 4px 10px rgba(0,0,0,0.4);
 
+  --sidebar-bg: #1a1a1a;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --card-bg: rgba(255, 255, 255, 0.03);
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --overlay-bg: rgba(0, 0, 0, 0.6);
+  --progress-track: rgba(255, 255, 255, 0.1);
+  --accent-color: #f59e0b;
+  --accent-hover: #d97706;
+
   font-family: 'Inter', 'system-ui', -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -25,6 +35,14 @@
   --btn-bg: rgba(26, 26, 26, 0.85);
   --btn-text: #f7f7f9;
   --btn-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  
+  --sidebar-bg: #ffffff;
+  --sidebar-border: rgba(0, 0, 0, 0.05);
+  --card-bg: #ffffff;
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --border-color: rgba(0, 0, 0, 0.08);
+  --overlay-bg: rgba(0, 0, 0, 0.3);
+  --progress-track: rgba(0, 0, 0, 0.05);
 }
 
 body {
